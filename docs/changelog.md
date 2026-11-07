@@ -8,6 +8,16 @@ Format mengikuti standar [Keep a Changelog](https://keepachangelog.com/id/1.0.0/
 ## [Unreleased]
 
 ### Added
+- Layanan penomoran berurutan aman konkurensi `DocumentNumberService` (`App\Services\DocumentNumberService`) dengan row-lock `document_sequences` untuk kode supplier `SUP-NNNN` dan barang `BRG-NNNN` (BR-19, Fase 3).
+- Primitive minimal `StockService::recordOpeningBalance` (`App\Services\StockService`) sebagai titik penulisan tunggal `products.current_stock` untuk mutasi saldo awal barang baru (BR-06, BR-17).
+- Service layer master data terisolasi: `CategoryService`, `UnitService`, `SupplierService`, dan `ProductService`.
+- FormRequest validasi server-side lengkap: `CategoryStoreRequest`, `CategoryUpdateRequest`, `UnitStoreRequest`, `UnitUpdateRequest`, `SupplierStoreRequest`, `SupplierUpdateRequest`, `ProductStoreRequest`, `ProductUpdateRequest`.
+- Controller dan view Blade/Tailwind/Alpine untuk master data: Kategori (`/categories`), Satuan (`/units`), Supplier (`/suppliers`), dan Master Barang (`/products`).
+- Fitur upload foto barang aman dengan validasi real MIME, verifikasi dimensi 100x100 s.d. 4000x4000 px, penolakan SVG dan file palsu, serta nama acak di `storage/app/public/products` (SEC-08, FR-PRD-06).
+- Kebijakan kerahasiaan harga: penyembunyian harga beli dan jual dari peran Staff Gudang (SG) pada tampilan HTML maupun JSON (BR-26, TC-AUTHZ-04).
+- Penegakan penguncian satuan: penguncian `allow_decimal` setelah dipakai barang, dan penguncian satuan pada barang yang memiliki riwayat mutasi stok (BR-25).
+- Penegakan pembatasan status: penolakan penonaktifan kategori/satuan yang masih dipakai barang aktif (`REFERENCE_IN_USE`), serta penolakan penonaktifan barang yang masih memiliki stok > 0 (BR-04).
+- Suite pengujian fitur dan acceptance criteria Tahap 3: `CategoryTest.php` (TC-CAT-01..03), `UnitTest.php` (TC-UNT-01..02), `SupplierTest.php` (TC-SUP-01..03), dan `ProductTest.php` (TC-PRD-01..07, TC-AUTHZ-04, TC-SEC-05).
 - Inisialisasi kerangka kerja aplikasi Laravel 12.71 pada baseline PHP 8.2.29 dan MySQL 8.0.30/InnoDB (PRD §10, Fase 0).
 - Instalasi starter kit Laravel Breeze dengan stack Blade, Tailwind CSS 3.4, dan Alpine.js 3.4.
 - Konfigurasi dependensi frontend analitik dan interaktif: Chart.js 4.4 dan SweetAlert2 11.16.

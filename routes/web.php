@@ -1,8 +1,12 @@
 <?php
 
 use App\Http\Controllers\Auth\PasswordController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\UnitController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -36,6 +40,32 @@ Route::middleware('auth')->group(function () {
     Route::get('/roles', [RoleController::class, 'index'])
         ->middleware('can:roles.view')
         ->name('roles.index');
+
+    // Master Data: Kategori (PRD §5.4)
+    Route::resource('categories', CategoryController::class)
+        ->except(['show', 'destroy']);
+    Route::patch('/categories/{category}/status', [CategoryController::class, 'toggleStatus'])
+        ->name('categories.status');
+
+    // Master Data: Satuan (PRD §5.5)
+    Route::resource('units', UnitController::class)
+        ->except(['show', 'destroy']);
+    Route::patch('/units/{unit}/status', [UnitController::class, 'toggleStatus'])
+        ->name('units.status');
+
+    // Master Data: Supplier (PRD §5.6)
+    Route::resource('suppliers', SupplierController::class)
+        ->except(['destroy']);
+    Route::patch('/suppliers/{supplier}/status', [SupplierController::class, 'toggleStatus'])
+        ->name('suppliers.status');
+
+    // Master Data: Barang (PRD §5.7)
+    Route::resource('products', ProductController::class)
+        ->except(['destroy']);
+    Route::patch('/products/{product}/status', [ProductController::class, 'toggleStatus'])
+        ->name('products.status');
+    Route::delete('/products/{product}/photo', [ProductController::class, 'deletePhoto'])
+        ->name('products.photo.destroy');
 });
 
 require __DIR__.'/auth.php';

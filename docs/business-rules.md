@@ -5,9 +5,9 @@
 | Tujuan | Merinci katalog seluruh aturan bisnis (BR-01 s.d. BR-32), transisi status, rumus stok, dan lokasi penegakan kode. |
 | Cakupan | Seluruh aturan penegakan integritas data persediaan, autentikasi, dan audit untuk satu gudang. |
 | Audiens | Developer, QA Engineer, Product Owner, Stakeholder |
-| Status | [SUDAH DIIMPLEMENTASI] (Sebagian — Aturan Autentikasi, Akun, dan Audit Tahap 2) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-06 |
+| Terakhir diperbarui | 2026-11-07 |
 | Pemilik | Product Owner & Backend Lead |
 | Terkait | `prd.md` §6, §7; `docs/architecture.md`; `docs/database.md`; `docs/authentication.md` |
 
@@ -43,12 +43,25 @@
 
 ---
 
-## 4. Prinsip Integritas Saldo Stok (Fondasi)
+## 4. Prinsip Integritas Saldo Stok & Master Data (Tahap 3)
 
-1. **Satu Jalur Penulisan (BR-06):** Nilai `products.current_stock` hanya boleh diperbarui melalui `StockService` (tahap 4).
-2. **Atomik dan Terkunci (BR-08, BR-09):** Setiap perubahan stok berjalan dalam satu transaksi basis data dengan *pessimistic row locking* berurutan ID naik untuk mencegah *deadlock*.
-3. **Pencegahan Stok Negatif (BR-02):** Nilai stok, kuantitas transaksi (>0), stok minimum, dan harga tidak boleh bernilai negatif (dijaga oleh validasi aplikasi dan CHECK constraint MySQL).
-4. **Append-Only History (BR-15):** Tabel `stock_movements` dan `activity_logs` tidak boleh diubah (*update*) atau dihapus (*delete*). Model Eloquent melempar `RuntimeException` pada event updating/deleting.
+1. **Satu Jalur Penulisan (BR-06):** Nilai `products.current_stock` hanya boleh diperbarui melalui `StockService`. Kolom `current_stock` dihapus dari `$fillable` Eloquent; tidak ada form, endpoint, controller, atau seeder yang menulis langsung ke kolom tersebut.
+2. **Saldo Awal Registrasi (BR-17):** Field `opening_stock` pada form pembuatan barang dieksekusi melalui `StockService::recordOpeningBalance`. Bila `opening_stock > 0`, sistem menyisipkan tepat satu movement `opening_balance` (before: 0, change: +opening_stock, after: opening_stock) dan memperbarui `current_stock` dalam satu transaksi atomik. Bila `opening_stock = 0`, tidak ada movement yang dibuat. Bila terjadi kegagalan, seluruh pembuatan barang di-rollback.
+3. **Format Kuantitas & Desimal (BR-01):** Jika `units.allow_decimal = false`, kuantitas stok minimum dan stok awal harus berupa bilangan bulat. Jika true, kuantitas mengizinkan desimal hingga maksimal 3 digit.
+4. **Pembatasan Penonaktifan Master Data (BR-04):**
+   - Kategori dan satuan dilarang dinonaktifkan jika masih digunakan oleh barang berstatus aktif (ditolak HTTP 422 `REFERENCE_IN_USE` dengan pesan menyebut jumlah barang aktif terkait).
+   - Barang hanya boleh dinonaktifkan jika `current_stock = 0`.
+   - Supplier dapat dinonaktifkan kapan saja; supplier nonaktif tidak dapat dipilih untuk data/transaksi baru, tetapi riwayat tetap terjaga.
+   - Reaktivasi selalu diizinkan untuk semua entitas master data.
+5. **Immutabilitas Kode Identitas (BR-05):** Kode supplier (`SUP-NNNN`) dan kode barang (`BRG-NNNN` atau manual) bersifat permanen (immutable) setelah disimpan. Endpoint update mengabaikan upaya modifikasi kode.
+6. **Penomoran Otomatis Berurutan (BR-19):** Penomoran kode `SUP-NNNN` dan `BRG-NNNN` dibangkitkan oleh `DocumentNumberService` menggunakan *pessimistic row lock* (`lockForUpdate()`) pada tabel `document_sequences` dalam transaksi basis data untuk menjamin keunikan di bawah konkurensi.
+7. **Penguncian Satuan (BR-25):** Nilai `allow_decimal` pada satuan terkunci permanen setelah satuan digunakan oleh barang mana pun. Satuan pada master barang terkunci permanen setelah barang memiliki riwayat mutasi stok.
+8. **Penyembunyian Harga Sensitif (BR-26):** Pengguna tanpa izin `products.view-price` (seperti Staff Gudang / SG) tidak pernah menerima field harga beli maupun harga jual pada tampilan HTML maupun payload JSON.
+9. **Penentuan Status Stok (BR-18):**
+   - `habis`: jika `current_stock <= 0`.
+   - `minimum`: jika `0 < current_stock <= min_stock`.
+   - `aman`: jika `current_stock > min_stock`.
+10. **Keamanan Upload Foto (SEC-08):** Format yang diterima: JPG, JPEG, PNG, WebP (maks 2 MB, dimensi 100x100 s.d. 4000x4000 px). File SVG dan MIME palsu ditolak keras; nama file diacak dan disimpan di `storage/app/public/products`.
 
 ---
 

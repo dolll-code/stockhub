@@ -5,9 +5,9 @@
 | Tujuan | Memberikan instruksi operasional penggunaan aplikasi StockHub per peran pengguna dan per modul. |
 | Cakupan | Panduan antarmuka web untuk peran Super Admin, Admin Gudang, Staff Gudang, dan Manajer. |
 | Audiens | Pengguna Akhir, Administrator Sistem, QA Tester |
-| Status | [SUDAH DIIMPLEMENTASI] (Sebagian — Modul Autentikasi & Akun Pengguna Tahap 2) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-06 |
+| Terakhir diperbarui | 2026-11-07 |
 | Pemilik | QA Lead & Product Owner |
 | Terkait | `prd.md` §5, §8, §13; `docs/authentication.md` |
 
@@ -90,3 +90,101 @@ Super Admin memiliki menu **Data Pengguna** (`/users`) pada bilah sisi navigasi:
 ## 5. Melihat Matriks Peran dan Hak Akses
 
 Super Admin dapat membuka menu **Peran & Hak Akses** (`/roles`) untuk melihat tabel referensi 26 permission terhadap 4 peran sistem secara *read-only*.
+
+---
+
+## 6. Manajemen Kategori Barang (`/categories`)
+
+Hak akses: Super Admin dan Admin Gudang (kelola); Staff Gudang dan Manajer (hanya lihat).
+
+### 6.1 Melihat Daftar & Filter Kategori
+- **Pencarian:** Cari berdasarkan nama kategori pada kotak pencarian.
+- **Filter Status:** Tampilkan semua, kategori aktif, atau nonaktif.
+- **Kolom Jumlah Barang:** Menampilkan banyaknya barang yang terhubung ke kategori tersebut.
+
+### 6.2 Menambah & Mengubah Kategori
+1. Klik **Tambah Kategori** atau klik **Ubah** pada baris kategori.
+2. Masukkan nama kategori (3–100 karakter, unik case-insensitive) dan deskripsi opsional.
+3. Klik **Simpan**.
+
+### 6.3 Mengaktifkan / Menonaktifkan Kategori
+1. Klik tombol **Nonaktifkan** atau **Aktifkan** pada baris kategori.
+2. Konfirmasi aksi pada dialog sembul.
+3. **Aturan Pembatasan (BR-04):** Penonaktifan kategori akan **ditolak** oleh sistem apabila kategori tersebut masih digunakan oleh barang aktif, lengkap dengan pesan jumlah barang terkait. Kategori nonaktif tidak akan muncul pada pilihan pembuatan barang baru.
+
+---
+
+## 7. Manajemen Satuan Barang (`/units`)
+
+Hak akses: Super Admin dan Admin Gudang (kelola); Staff Gudang dan Manajer (hanya lihat).
+
+### 7.1 Format Kuantitas (Bulat vs Desimal)
+- **Bilangan Bulat:** Kuantitas transaksi/stok tidak boleh memiliki pecahan desimal (contoh: pcs, unit, box, karton, pack).
+- **Desimal:** Kuantitas dapat memiliki angka desimal hingga maksimal 3 digit (contoh: kg, gram, liter, meter).
+- **Penguncian Permanen (BR-25):** Pengaturan desimal satuan terkunci permanen setelah satuan tersebut digunakan oleh master barang.
+
+### 7.2 Menambah & Mengubah Satuan
+1. Klik **Tambah Satuan** atau **Ubah** pada baris yang dituju.
+2. Masukkan nama satuan (2–50 karakter) dan simbol/singkatan unik (1–10 karakter).
+3. Tentukan aturan kuantitas (hanya saat membuat, atau sebelum dipakai barang).
+4. Klik **Simpan**.
+
+### 7.3 Status Satuan
+Satuan tidak dapat dinonaktifkan jika masih digunakan oleh barang aktif mana pun (BR-04).
+
+---
+
+## 8. Manajemen Supplier (`/suppliers`)
+
+Hak akses: Super Admin dan Admin Gudang (kelola); Staff Gudang dan Manajer (hanya lihat).
+
+### 8.1 Kode Supplier Otomatis & Terurut (BR-05, BR-19)
+- Kode supplier dibangkitkan otomatis oleh sistem (`SUP-0001`, `SUP-0002` dst.) dengan jaminan keunikan konkurensi.
+- Kode supplier bersifat tetap (*immutable*) dan tidak dapat diedit setelah disimpan.
+
+### 8.2 Menambah & Mengubah Data Supplier
+1. Klik **Tambah Supplier** untuk membuka formulir.
+2. Isi nama supplier/perusahaan, nama kontak PIC, nomor telepon, email, dan alamat.
+3. Klik **Simpan**.
+
+### 8.3 Detail Supplier & Riwayat Transaksi (FR-SUP-04)
+Klik tombol **Detail** pada supplier untuk melihat data lengkap serta kartu riwayat 10 transaksi barang masuk terakhir dari supplier tersebut.
+
+### 8.4 Penonaktifan Supplier (BR-04)
+Supplier dapat dinonaktifkan kapan saja. Supplier nonaktif tidak akan muncul di form barang masuk baru atau form barang baru, namun nama supplier tetap terjaga utuh pada seluruh laporan dan riwayat historis.
+
+---
+
+## 9. Manajemen Master Barang (`/products`)
+
+Hak akses: Super Admin dan Admin Gudang (kelola); Staff Gudang dan Manajer (hanya lihat).
+
+### 9.1 Daftar & Filter Pencarian Barang (FR-PRD-01)
+- **Pencarian:** Cari berdasarkan kode atau nama barang.
+- **Filter Multi-kriteria:** Kategori, status keaktifan, dan status stok (Aman, Minimum, Habis sesuai BR-18).
+- **Pengurutan:** Urutkan berdasarkan tanggal dibuat, nama barang, atau kuantitas stok saat ini.
+- **Paginasi:** Pilihan 15, 25, 50, atau 100 baris per halaman.
+
+### 9.2 Menambah Barang Baru & Saldo Awal (FR-PRD-02, BR-17)
+1. Klik **Tambah Barang Baru**.
+2. **Kode Barang:** Boleh dikosongkan untuk penomoran otomatis (`BRG-NNNN`), atau diisi manual dengan format alfanumerik 3–30 karakter (contoh: `SKU.001-A`). Kode akan otomatis di-uppercase dan bersifat *immutable*.
+3. **Kategori & Satuan:** Wajib memilih kategori dan satuan yang berstatus aktif.
+4. **Stok Minimum:** Tentukan batas minimum untuk memicu peringatan stok menipis.
+5. **Saldo Awal (`opening_stock`):**
+   - Bila diisi `> 0`, sistem akan membuat mutasi saldo awal (`opening_balance`) secara aman melalui `StockService` dalam transaksi database yang sama (BR-17).
+   - Bila diisi `0`, tidak ada mutasi stok yang dibuat.
+   - Kolom `current_stock` dikelola eksklusif oleh sistem dan bukan merupakan input formulir (BR-06).
+6. **Upload Foto (FR-PRD-06, SEC-08):** Unggah foto produk (format JPG/PNG/WebP, maks 2 MB, dimensi 100x100 s.d. 4000x4000 px). Sistem memverifikasi MIME sebenarnya dan menolak file SVG atau manipulasi ekstensi.
+7. Klik **Simpan Barang**.
+
+### 9.3 Mengubah Barang & Penguncian Satuan (BR-25)
+1. Klik **Ubah** pada baris barang.
+2. Perbarui nama, kategori, stok minimum, atau ganti/hapus foto.
+3. *Aturan Satuan:* Pilihan satuan terkunci dan tidak dapat diubah apabila barang tersebut sudah memiliki riwayat mutasi stok.
+
+### 9.4 Penonaktifan Barang (BR-04)
+Barang **hanya dapat dinonaktifkan jika stok saat ini bernilai 0**. Jika stok masih tersedia (>0), permintaan penonaktifan akan ditolak oleh sistem dengan menampilkan jumlah stok yang masih tersisa.
+
+### 9.5 Kebijakan Kerahasiaan Harga (BR-26)
+Pengguna dengan peran **Staff Gudang (SG)** tidak memiliki izin `products.view-price`. Kolom harga beli dan harga jual disembunyikan sepenuhnya dari layar Staff Gudang dan tidak pernah disertakan dalam respon server.
+

@@ -23,7 +23,6 @@ class Product extends Model
         'main_supplier_id',
         'purchase_price',
         'selling_price',
-        'current_stock',
         'min_stock',
         'storage_location',
         'description',

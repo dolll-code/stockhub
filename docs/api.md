@@ -5,9 +5,9 @@
 | Tujuan | Menjelaskan kontrak antarmuka web HTTP, endpoint AJAX JSON, skema validasi, dan katalog kode error. |
 | Cakupan | Rute sesi web browser dan endpoint AJAX internal; tidak mencakup REST API publik berbasis token (Later). |
 | Audiens | Developer, QA Engineer, Frontend Reviewer |
-| Status | [SUDAH DIIMPLEMENTASI] (Sebagian — Rute Auth & Pengguna Tahap 2) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-06 |
+| Terakhir diperbarui | 2026-11-07 |
 | Pemilik | Backend Lead |
 | Terkait | `prd.md` §12, §15; `docs/authentication.md`; `docs/business-rules.md` |
 
@@ -56,7 +56,58 @@
 
 ---
 
-## 4. Format Amplop Error JSON
+## 4. Rute Master Data Aktual (Tahap 3)
+
+### 4.1 Kategori Barang (`categories.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/categories` | `categories.index` | `categories.view` / `categories.manage` | SA, AG, SG, MG | Daftar kategori: filter `q`, `status`, pagination 15/25/50/100, hitungan barang |
+| `GET` | `/categories/create` | `categories.create` | `categories.manage` | SA, AG | Formulir tambah kategori baru |
+| `POST` | `/categories` | `categories.store` | `categories.manage` | SA, AG | Simpan kategori: `name` (3–100 unik case-insensitive), `description` (maks 500), `is_active` |
+| `GET` | `/categories/{category}/edit` | `categories.edit` | `categories.manage` | SA, AG | Formulir ubah kategori |
+| `PUT` | `/categories/{category}` | `categories.update` | `categories.manage` | SA, AG | Perbarui data kategori; nonaktif ditolak jika ada barang aktif terkait (BR-04) |
+| `PATCH`| `/categories/{category}/status` | `categories.status` | `categories.manage` | SA, AG | Toggle status; nonaktif ditolak jika ada barang aktif terkait (BR-04) |
+
+### 4.2 Satuan Barang (`units.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/units` | `units.index` | `units.view` / `units.manage` | SA, AG, SG, MG | Daftar satuan: filter `q`, `status`, pagination |
+| `GET` | `/units/create` | `units.create` | `units.manage` | SA, AG | Formulir tambah satuan baru |
+| `POST` | `/units` | `units.store` | `units.manage` | SA, AG | Simpan satuan: `name` (2–50), `symbol` (1–10), `allow_decimal` (bool), `description` (maks 255) |
+| `GET` | `/units/{unit}/edit` | `units.edit` | `units.manage` | SA, AG | Formulir ubah satuan (`allow_decimal` terkunci bila sudah dipakai barang, BR-25) |
+| `PUT` | `/units/{unit}` | `units.update` | `units.manage` | SA, AG | Perbarui data satuan; perubahan `allow_decimal` ditolak bila sudah dipakai barang |
+| `PATCH`| `/units/{unit}/status` | `units.status` | `units.manage` | SA, AG | Toggle status; nonaktif ditolak bila dipakai barang aktif (BR-04) |
+
+### 4.3 Supplier (`suppliers.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/suppliers` | `suppliers.index` | `suppliers.view` / `suppliers.manage` | SA, AG, SG, MG | Daftar supplier: filter `q` (kode/nama/kontak), `status`, pagination |
+| `GET` | `/suppliers/create` | `suppliers.create` | `suppliers.manage` | SA, AG | Formulir tambah supplier |
+| `POST` | `/suppliers` | `suppliers.store` | `suppliers.manage` | SA, AG | Simpan supplier: kode otomatis `SUP-NNNN` (immutable), `name` (3–150), `phone`, `email` |
+| `GET` | `/suppliers/{supplier}` | `suppliers.show` | `suppliers.view` / `suppliers.manage` | SA, AG, SG, MG | Detail supplier + 10 transaksi masuk terakhir |
+| `GET` | `/suppliers/{supplier}/edit` | `suppliers.edit` | `suppliers.manage` | SA, AG | Formulir ubah supplier (kode readonly) |
+| `PUT` | `/suppliers/{supplier}` | `suppliers.update` | `suppliers.manage` | SA, AG | Perbarui data supplier (kode immutable tidak berubah) |
+| `PATCH`| `/suppliers/{supplier}/status` | `suppliers.status` | `suppliers.manage` | SA, AG | Toggle status aktif/nonaktif kapan saja (BR-04) |
+
+### 4.4 Master Barang (`products.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/products` | `products.index` | `products.view` / `products.manage` | SA, AG, SG, MG | Daftar barang: filter `q`, `category_id`, `stock_status`, `status`, sort, pagination (harga disembunyikan dari SG) |
+| `GET` | `/products/create` | `products.create` | `products.manage` | SA, AG | Formulir tambah barang |
+| `POST` | `/products` | `products.store` | `products.manage` | SA, AG | Simpan barang baru: kode auto/manual regex, upload foto, opening_stock -> StockService |
+| `GET` | `/products/{product}` | `products.show` | `products.view` / `products.manage` | SA, AG, SG, MG | Detail barang + kartu stok 20 mutasi terakhir (harga disembunyikan dari SG) |
+| `GET` | `/products/{product}/edit` | `products.edit` | `products.manage` | SA, AG | Formulir ubah barang (satuan terkunci bila ada mutasi, BR-25) |
+| `PUT` | `/products/{product}` | `products.update` | `products.manage` | SA, AG | Perbarui data barang (kode immutable, current_stock diabaikan) |
+| `PATCH`| `/products/{product}/status` | `products.status` | `products.manage` | SA, AG | Toggle status; nonaktif ditolak bila current_stock > 0 (BR-04) |
+| `DELETE`| `/products/{product}/photo` | `products.photo.destroy` | `products.manage` | SA, AG | Hapus foto barang dari storage publik |
+
+---
+
+## 5. Format Amplop Error JSON
 
 ```json
 {
@@ -70,7 +121,7 @@
 
 ---
 
-## 5. Rangkuman Endpoint AJAX `[DIRENCANAKAN]` (Tahap Berikutnya)
+## 6. Rangkuman Endpoint AJAX `[DIRENCANAKAN]` (Tahap Berikutnya)
 
 - `GET /ajax/products/search`: Pencarian barang untuk dropdown baris formulir.
 - `GET /ajax/products/{id}/stock`: Pengambilan stok terkini dan status stok barang.
@@ -78,11 +129,12 @@
 
 ---
 
-## 6. Katalog Kode Error Domain Terkait
+## 7. Katalog Kode Error Domain Terkait
 
 | Kode Error | HTTP Status | Pemicu / Keterangan |
 |---|---|---|
 | `VALIDATION_FAILED` | 422 | Format isian form tidak memenuhi spesifikasi |
+| `REFERENCE_IN_USE` | 422 | Penolakan penonaktifan kategori/satuan yang masih dipakai barang aktif (BR-04) |
 | `LAST_SUPER_ADMIN` | 422 | Penolakan penonaktifan atau penurunan peran Super Admin aktif terakhir (BR-24) |
 | `PASSWORD_CHANGE_REQUIRED` | 403 | Akses rute ditolak karena akun berstatus `must_change_password = true` |
 | `ACCOUNT_INACTIVE` | 403 | Akun dinonaktifkan saat sesi masih aktif |
