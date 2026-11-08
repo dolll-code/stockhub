@@ -3,11 +3,24 @@
 namespace App\Models;
 
 use App\Enums\AdjustmentReason;
+use Carbon\CarbonInterface;
 use Database\Factories\StockAdjustmentFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property int $id
+ * @property string $number
+ * @property CarbonInterface $adjustment_date
+ * @property int $product_id
+ * @property float|string $system_qty
+ * @property float|string $physical_qty
+ * @property float|string $difference
+ * @property AdjustmentReason $reason_code
+ * @property string $notes
+ * @property int $created_by
+ */
 class StockAdjustment extends Model
 {
     /** @use HasFactory<StockAdjustmentFactory> */

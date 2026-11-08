@@ -5,7 +5,7 @@
 | Tujuan | Memberikan instruksi operasional penggunaan aplikasi StockHub per peran pengguna dan per modul. |
 | Cakupan | Panduan antarmuka web untuk peran Super Admin, Admin Gudang, Staff Gudang, dan Manajer. |
 | Audiens | Pengguna Akhir, Administrator Sistem, QA Tester |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4: Auth, Akun, Master Data, dan Transaksi Stok) |
 | Versi aplikasi | 1.0.0 |
 | Terakhir diperbarui | 2026-11-07 |
 | Pemilik | QA Lead & Product Owner |
@@ -187,4 +187,71 @@ Barang **hanya dapat dinonaktifkan jika stok saat ini bernilai 0**. Jika stok ma
 
 ### 9.5 Kebijakan Kerahasiaan Harga (BR-26)
 Pengguna dengan peran **Staff Gudang (SG)** tidak memiliki izin `products.view-price`. Kolom harga beli dan harga jual disembunyikan sepenuhnya dari layar Staff Gudang dan tidak pernah disertakan dalam respon server.
+
+---
+
+## 10. Transaksi Barang Masuk (`/stock-ins`)
+
+Hak akses: Super Admin, Admin Gudang, Staff Gudang (buat draft, ubah draft miliknya, konfirmasi); Manajer (hanya lihat).
+
+### 10.1 Alur Pembuatan Draft Barang Masuk (FR-STI-01)
+1. Buka menu **Barang Masuk**, lalu klik **Buat Barang Masuk**.
+2. **Tanggal Transaksi:** Tentukan tanggal bisnis penerimaan barang (maksimal 7 hari lampau sesuai batas `max_backdate_days`).
+3. **Sumber Masuk:** Pilih sumber (`pembelian`, `internal`, `retur`, atau `lainnya`). Bila sumber adalah pembelian (`purchase`), kolom **Supplier** wajib dipilih.
+4. **Item Barang:** Tambahkan 1 hingga 100 baris barang. Sistem secara otomatis mendeteksi satuan dan aturan desimal.
+5. Klik **Simpan Draft Masuk**. Dokumen tersimpan dengan nomor urut `IN-YYYYMM-NNNN` berstatus `draft`.
+6. **Catatan Stok (BR-07):** Pembuatan dan pengubahan draft tidak memengaruhi kuantitas stok persediaan.
+
+### 10.2 Mengonfirmasi Barang Masuk (FR-STI-03)
+1. Buka detail dokumen draft barang masuk.
+2. Klik tombol **Konfirmasi Masuk**, lalu setujui kotak dialog konfirmasi.
+3. Sistem memproses penambahan stok secara atomik melalui `StockService`, memperbarui status menjadi `confirmed`, mencatat mutasi riwayat `stock_in`, dan mencatat log aktivitas.
+4. Dokumen berstatus `confirmed` terkunci dan tidak dapat diedit lagi.
+
+### 10.3 Pembatalan Dokumen Barang Masuk (FR-STI-04, FR-STI-05)
+- **Membatalkan Draft:** Dapat dilakukan oleh pembuat dokumen atau SA/AG dengan memasukkan alasan pembatalan minimal 10 karakter. Dokumen menjadi `cancelled` tanpa memengaruhi stok.
+- **Membatalkan Confirmed (Reversal):** Hanya dapat dilakukan oleh Super Admin atau Admin Gudang. Sistem akan mengurangi kembali stok yang telah masuk sebelumnya via mutasi pembalik `stock_in_cancel`. Pembatalan ditolak apabila sisa stok saat ini lebih kecil dari kuantitas yang dibatalkan.
+
+---
+
+## 11. Transaksi Barang Keluar (`/stock-outs`)
+
+Hak akses: Super Admin, Admin Gudang, Staff Gudang (buat draft, ubah draft miliknya, konfirmasi); Manajer (hanya lihat).
+
+### 11.1 Alur Pembuatan Draft Barang Keluar (FR-STO-01)
+1. Buka menu **Barang Keluar**, lalu klik **Buat Barang Keluar**.
+2. **Peruntukan & Tujuan:** Pilih peruntukan (`pemakaian`, `penjualan`, `pengiriman`, dll.) dan isi tujuan penerima barang (3–150 karakter).
+3. **Item Barang:** Pilih barang. Antarmuka akan menampilkan sisa stok yang tersedia secara real-time via AJAX.
+4. **Peringatan Stok Kurang (BR-10):** Jika kuantitas yang dimasukkan melebihi stok yang ada, baris akan ditandai dengan peringatan kuning, namun penyimpanan draft tetap diizinkan.
+5. Klik **Simpan Draft Keluar**. Nomor dokumen `OUT-YYYYMM-NNNN` diterbitkan berstatus `draft`.
+
+### 11.2 Mengonfirmasi Barang Keluar (FR-STO-03)
+1. Buka detail dokumen draft barang keluar.
+2. Klik tombol **Konfirmasi Keluar**.
+3. Sistem mengunci baris produk di database dan memverifikasi ulang kecukupan stok saat ini.
+4. **Pencegahan Overselling:** Jika ada satu saja item barang yang stoknya tidak mencukupi, konfirmasi akan **ditolak secara utuh** dengan pesan kesalahan per baris (`INSUFFICIENT_STOCK`). Tidak ada pemotongan stok parsial.
+5. Jika seluruh stok mencukupi, stok akan dikurangkan, status menjadi `confirmed`, dan mutasi `stock_out` tercatat.
+
+### 11.3 Pembatalan Dokumen Barang Keluar
+- **Membatalkan Draft:** Status menjadi `cancelled` tanpa ada mutasi stok.
+- **Membatalkan Confirmed:** Hanya oleh SA/AG; sistem memposting mutasi pembalik `stock_out_cancel` dan mengembalikan kuantitas barang ke dalam stok persediaan gudang.
+
+---
+
+## 12. Penyesuaian Stok Opname (`/adjustments`)
+
+Hak akses: Khusus Super Admin dan Admin Gudang (Staff Gudang dan Manajer ditolak HTTP 403).
+
+### 12.1 Kapan Menggunakan Penyesuaian?
+Digunakan saat hasil stok opname fisik di gudang berbeda dengan catatan sistem (misal: barang rusak, hilang, salah hitung saat masuk, atau barang lebih ditemukan).
+
+### 12.2 Prosedur Input Penyesuaian (FR-ADJ-01, BR-16)
+1. Buka menu **Penyesuaian** pada bilah sisi, lalu klik **Penyesuaian Stok Baru**.
+2. Pilih barang yang disesuaikan. Sistem akan otomatis menampilkan stok sistem saat ini.
+3. Masukkan angka hasil hitung fisik pada kolom **Hasil Hitung Fisik**. Sistem secara otomatis menghitung selisih (`Fisik - Sistem`).
+4. Pilih alasan selisih (rusak, hilang, salah hitung, kadaluwarsa, ditemukan, dll.).
+5. Isi **Keterangan Detail Investigasi** minimal 10 karakter.
+6. Klik **Posting Penyesuaian**, lalu konfirmasi pada dialog sembul.
+7. Dokumen langsung berstatus **Final** (nomor `ADJ-YYYYMM-NNNN`) dan stok sistem langsung diperbarui sesuai angka fisik melalui `StockService`. Dokumen penyesuaian tidak dapat diedit maupun dibatalkan.
+
 

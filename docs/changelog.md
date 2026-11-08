@@ -8,6 +8,15 @@ Format mengikuti standar [Keep a Changelog](https://keepachangelog.com/id/1.0.0/
 ## [Unreleased]
 
 ### Added
+- Layanan inti transaksi dan mutasi stok `StockService` (`App\Services\StockService`) sebagai gerbang tunggal penulisan `products.current_stock` menggunakan kalkulasi presisi BCMath, *pessimistic row locking* berurutan ID naik, dan penanganan *deadlock retry* 3x (Fase 4, BR-06, BR-08, BR-09).
+- Modul Transaksi Barang Masuk (`StockInService`, `StockInController`): alur draft (1–100 item), konfirmasi penambahan stok atomik, pembatalan draft, dan pembatalan confirmed dengan mutasi pembalik `stock_in_cancel` (FR-STI-01..07, BR-13, BR-22).
+- Modul Transaksi Barang Keluar (`StockOutService`, `StockOutController`): alur draft (1–100 item), pencegahan *overselling* saat konfirmasi dengan penolakan menyeluruh (`INSUFFICIENT_STOCK`), pembatalan draft, dan pemulihan stok confirmed via `stock_out_cancel` (FR-STO-01..07, BR-10).
+- Modul Penyesuaian Stok Opname (`StockAdjustmentController`): formulir hitung fisik opname, deteksi perubahan stok latar belakang (`STOCK_CHANGED`), penolakan selisih nol (`NO_DIFFERENCE`), dan posting final langsung (FR-ADJ-01..02, BR-16).
+- Generator nomor dokumen terurut sekuensial aman konkurensi pada `DocumentNumberService`: `IN-YYYYMM-NNNN`, `OUT-YYYYMM-NNNN`, dan `ADJ-YYYYMM-NNNN` (BR-19).
+- Endpoint AJAX JSON untuk transaksi: `/ajax/products/search` (pencarian barang aktif) dan `/ajax/products/{id}/stock` (stok dan satuan terkini) dengan penyembunyian harga dari Staff Gudang (PRD §12.3).
+- Hirarki exception domain terpusat: `InsufficientStockException`, `ProductInactiveException`, `ReversalInsufficientStockException`, `NoDifferenceException`, `InvalidStateTransitionException`, `StockChangedException`, dan `LockTimeoutException` (PRD §15).
+- Tampilan Blade/Tailwind/Alpine responsif dengan baris barang dinamis, kalkulasi subtotal otomatis, modal konfirmasi SweetAlert2 anti-double-click, dan penanda peringatan stok kurang.
+- Suite pengujian transaksi dan konkurensi Pest: `StockInTest.php` (TC-STI-01..10), `StockOutTest.php` (TC-STO-01..07), `StockAdjustmentTest.php` (TC-ADJ-01..04), `ConcurrencyTest.php` (TC-CON-01..03 & 50-iteration MySQL stress test), `ManagerReadOnlyAuthorizationTest.php` (TC-AUTHZ-03), dan `StockArchitectureTest.php` (ARCH-STOCK).
 - Layanan penomoran berurutan aman konkurensi `DocumentNumberService` (`App\Services\DocumentNumberService`) dengan row-lock `document_sequences` untuk kode supplier `SUP-NNNN` dan barang `BRG-NNNN` (BR-19, Fase 3).
 - Primitive minimal `StockService::recordOpeningBalance` (`App\Services\StockService`) sebagai titik penulisan tunggal `products.current_stock` untuk mutasi saldo awal barang baru (BR-06, BR-17).
 - Service layer master data terisolasi: `CategoryService`, `UnitService`, `SupplierService`, dan `ProductService`.

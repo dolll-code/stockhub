@@ -5,7 +5,7 @@
 | Tujuan | Menjelaskan kontrak antarmuka web HTTP, endpoint AJAX JSON, skema validasi, dan katalog kode error. |
 | Cakupan | Rute sesi web browser dan endpoint AJAX internal; tidak mencakup REST API publik berbasis token (Later). |
 | Audiens | Developer, QA Engineer, Frontend Reviewer |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4: Auth, Akun, Master Data, dan Transaksi Stok) |
 | Versi aplikasi | 1.0.0 |
 | Terakhir diperbarui | 2026-11-07 |
 | Pemilik | Backend Lead |
@@ -105,9 +105,56 @@
 | `PATCH`| `/products/{product}/status` | `products.status` | `products.manage` | SA, AG | Toggle status; nonaktif ditolak bila current_stock > 0 (BR-04) |
 | `DELETE`| `/products/{product}/photo` | `products.photo.destroy` | `products.manage` | SA, AG | Hapus foto barang dari storage publik |
 
+### 4.5 Transaksi Barang Masuk (`stock-ins.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/stock-ins` | `stock-ins.index` | `stock-ins.view` | SA, AG, MG; SG (own) | Daftar transaksi: filter `number`, `status`, `source_type`, `supplier_id`, tanggal |
+| `GET` | `/stock-ins/create` | `stock-ins.create` | `stock-ins.create` | SA, AG, SG | Formulir draft masuk (1–100 baris item) |
+| `POST` | `/stock-ins` | `stock-ins.store` | `stock-ins.create` | SA, AG, SG | Simpan draft baru: nomor otomatis `IN-YYYYMM-NNNN`, status draft |
+| `GET` | `/stock-ins/{stock_in}` | `stock-ins.show` | `stock-ins.view` | SA, AG, MG; SG (own) | Detail dokumen + baris barang (SG milik orang lain -> 404) |
+| `GET` | `/stock-ins/{stock_in}/edit` | `stock-ins.edit` | `stock-ins.create` | SA, AG; SG (own) | Formulir ubah draft masuk (hanya status draft) |
+| `PUT` | `/stock-ins/{stock_in}` | `stock-ins.update` | `stock-ins.create` | SA, AG; SG (own) | Perbarui draft masuk (status confirmed ditolak 409) |
+| `POST` | `/stock-ins/{stock_in}/confirm` | `stock-ins.confirm` | `stock-ins.create` | SA, AG; SG (own) | Konfirmasi draft masuk: posting stok atomik via StockService |
+| `POST` | `/stock-ins/{stock_in}/cancel` | `stock-ins.cancel` | `stock-ins.create` / `.cancel-confirmed` | draft: pembuat/SA/AG; confirmed: SA/AG | Batalkan transaksi (draft: tanpa efek stok; confirmed: reversal stok) |
+
+### 4.6 Transaksi Barang Keluar (`stock-outs.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/stock-outs` | `stock-outs.index` | `stock-outs.view` | SA, AG, MG; SG (own) | Daftar transaksi keluar: filter `number`, `status`, `purpose_type`, `destination`, tanggal |
+| `GET` | `/stock-outs/create` | `stock-outs.create` | `stock-outs.create` | SA, AG, SG | Formulir draft keluar (1–100 baris item, indikator stok AJAX) |
+| `POST` | `/stock-outs` | `stock-outs.store` | `stock-outs.create` | SA, AG, SG | Simpan draft baru: nomor otomatis `OUT-YYYYMM-NNNN` |
+| `GET` | `/stock-outs/{stock_out}` | `stock-outs.show` | `stock-outs.view` | SA, AG, MG; SG (own) | Detail dokumen barang keluar (SG milik orang lain -> 404) |
+| `GET` | `/stock-outs/{stock_out}/edit` | `stock-outs.edit` | `stock-outs.create` | SA, AG; SG (own) | Formulir ubah draft keluar (hanya status draft) |
+| `PUT` | `/stock-outs/{stock_out}` | `stock-outs.update` | `stock-outs.create` | SA, AG; SG (own) | Perbarui draft keluar (status confirmed ditolak 409) |
+| `POST` | `/stock-outs/{stock_out}/confirm` | `stock-outs.confirm` | `stock-outs.create` | SA, AG; SG (own) | Konfirmasi keluar: verifikasi stok cukup & potong stok via StockService |
+| `POST` | `/stock-outs/{stock_out}/cancel` | `stock-outs.cancel` | `stock-outs.create` / `.cancel-confirmed` | draft: pembuat/SA/AG; confirmed: SA/AG | Batalkan transaksi (draft: tanpa efek stok; confirmed: pemulihan stok) |
+
+### 4.7 Penyesuaian Stok Opname (`adjustments.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/adjustments` | `adjustments.index` | `adjustments.view` | SA, AG, MG | Daftar penyesuaian: filter `product_id`, `reason_code`, tanggal |
+| `GET` | `/adjustments/create` | `adjustments.create` | `adjustments.create` | SA, AG | Formulir opname: input fisik & expected_system_qty |
+| `POST` | `/adjustments` | `adjustments.store` | `adjustments.create` | SA, AG | Simpan & posting penyesuaian: nomor `ADJ-YYYYMM-NNNN`, final langsung |
+| `GET` | `/adjustments/{adjustment}` | `adjustments.show` | `adjustments.view` | SA, AG, MG | Detail hasil penyesuaian stok opname |
+
+*Catatan:* Penyesuaian stok tidak memiliki rute edit/update/delete (BR-16).
+
 ---
 
-## 5. Format Amplop Error JSON
+## 5. Rangkuman Endpoint AJAX JSON (PRD §12.3)
+
+| Method | Path | Tujuan | Permission | Status |
+|---|---|---|---|:---:|
+| `GET` | `/ajax/products/search?q=&limit=20` | Pencarian barang aktif untuk dropdown transaksi | `products.view` | [SUDAH DIIMPLEMENTASI] |
+| `GET` | `/ajax/products/{id}/stock` | Pengambilan data stok terkini, satuan, dan status stok | `products.view` | [SUDAH DIIMPLEMENTASI] |
+| `GET` | `/ajax/dashboard/chart?period=` | Data analitik grafik dasbor transaksi masuk vs keluar | `dashboard.view` | `[DIRENCANAKAN]` (Tahap 5) |
+
+---
+
+## 6. Format Amplop Error JSON
 
 ```json
 {
@@ -121,14 +168,6 @@
 
 ---
 
-## 6. Rangkuman Endpoint AJAX `[DIRENCANAKAN]` (Tahap Berikutnya)
-
-- `GET /ajax/products/search`: Pencarian barang untuk dropdown baris formulir.
-- `GET /ajax/products/{id}/stock`: Pengambilan stok terkini dan status stok barang.
-- `GET /ajax/dashboard/chart`: Data grafik perbandingan transaksi masuk vs keluar.
-
----
-
 ## 7. Katalog Kode Error Domain Terkait
 
 | Kode Error | HTTP Status | Pemicu / Keterangan |
@@ -136,8 +175,15 @@
 | `VALIDATION_FAILED` | 422 | Format isian form tidak memenuhi spesifikasi |
 | `REFERENCE_IN_USE` | 422 | Penolakan penonaktifan kategori/satuan yang masih dipakai barang aktif (BR-04) |
 | `LAST_SUPER_ADMIN` | 422 | Penolakan penonaktifan atau penurunan peran Super Admin aktif terakhir (BR-24) |
+| `INSUFFICIENT_STOCK` | 422 | Kuantitas barang keluar melebihi stok tersedia saat konfirmasi (BR-10) |
+| `PRODUCT_INACTIVE` | 422 | Terdapat barang berstatus nonaktif dalam transaksi atau penyesuaian |
+| `REVERSAL_INSUFFICIENT_STOCK` | 422 | Pembatalan barang masuk membuat stok persediaan saat ini bernilai negatif (BR-13) |
+| `NO_DIFFERENCE` | 422 | Hasil hitung fisik sama dengan stok sistem; tidak ada yang perlu disesuaikan |
+| `INVALID_STATE_TRANSITION` | 409 | Transisi status tidak sah / dokumen sudah diproses atau bukan status draft (BR-12) |
+| `STOCK_CHANGED` | 409 | Stok sistem berubah oleh transaksi lain saat form penyesuaian sedang dibuka (D-33) |
 | `PASSWORD_CHANGE_REQUIRED` | 403 | Akses rute ditolak karena akun berstatus `must_change_password = true` |
 | `ACCOUNT_INACTIVE` | 403 | Akun dinonaktifkan saat sesi masih aktif |
 | `TOO_MANY_REQUESTS` | 429 | Melebihi batas throttle login 5 kali dalam 1 menit |
 | `FORBIDDEN` | 403 | Pengguna tidak memiliki hak akses permission yang disyaratkan |
-| `NOT_FOUND` | 404 | Data tidak ditemukan atau data milik orang lain di luar scope *own* |
+| `NOT_FOUND` | 404 | Data tidak ditemukan atau data milik pengguna lain di luar scope *own* (BR-23) |
+| `LOCK_TIMEOUT` | 503 | Deadlock / lock wait timeout pada MySQL setelah 3 kali percobaan (BR-09) |

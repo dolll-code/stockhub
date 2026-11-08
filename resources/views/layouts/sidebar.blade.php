@@ -63,19 +63,26 @@
         @endcanany
 
         <!-- Transaksi -->
-        <div class="pt-2">
-            <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Transaksi</div>
-            <div class="mt-1 space-y-1">
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Barang Masuk</span>
-                </a>
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Barang Keluar</span>
-                </a>
+        @canany(['stock-ins.view', 'stock-ins.create', 'stock-outs.view', 'stock-outs.create'])
+            <div class="pt-2">
+                <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Transaksi</div>
+                <div class="mt-1 space-y-1">
+                    @canany(['stock-ins.view', 'stock-ins.create'])
+                        <a href="{{ route('stock-ins.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stock-ins.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-cyan-500 rounded-full"></span>
+                            <span>Barang Masuk</span>
+                        </a>
+                    @endcanany
+
+                    @canany(['stock-outs.view', 'stock-outs.create'])
+                        <a href="{{ route('stock-outs.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stock-outs.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-rose-500 rounded-full"></span>
+                            <span>Barang Keluar</span>
+                        </a>
+                    @endcanany
+                </div>
             </div>
-        </div>
+        @endcanany
 
         <!-- Persediaan -->
         <div class="pt-2">
@@ -89,10 +96,12 @@
                     <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
                     <span>Stok Minimum</span>
                 </a>
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Penyesuaian</span>
-                </a>
+                @canany(['adjustments.view', 'adjustments.create'])
+                    <a href="{{ route('adjustments.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('adjustments.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-amber-500 rounded-full"></span>
+                        <span>Penyesuaian</span>
+                    </a>
+                @endcanany
                 <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
                     <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
                     <span>Riwayat Stok</span>

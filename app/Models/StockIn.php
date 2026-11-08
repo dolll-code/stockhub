@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\StockInSource;
 use App\Enums\TransactionStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\StockInFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
+/**
+ * @property int $id
+ * @property string $number
+ * @property CarbonInterface $transaction_date
+ * @property StockInSource $source_type
+ * @property ?int $supplier_id
+ * @property ?string $reference_document
+ * @property ?string $notes
+ * @property TransactionStatus $status
+ * @property float|string $total_amount
+ * @property int $created_by
+ * @property ?int $confirmed_by
+ * @property ?int $cancelled_by
+ * @property ?CarbonInterface $confirmed_at
+ * @property ?CarbonInterface $cancelled_at
+ * @property ?string $cancel_reason
+ */
 class StockIn extends Model
 {
     /** @use HasFactory<StockInFactory> */

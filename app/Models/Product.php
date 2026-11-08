@@ -10,6 +10,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property int $id
+ * @property string $code
+ * @property string $name
+ * @property int $category_id
+ * @property int $unit_id
+ * @property ?int $main_supplier_id
+ * @property float|string $purchase_price
+ * @property float|string|null $selling_price
+ * @property float|string $current_stock
+ * @property float|string $min_stock
+ * @property ?string $storage_location
+ * @property ?string $description
+ * @property ?string $photo_path
+ * @property bool $is_active
+ * @property ?int $created_by
+ * @property ?int $updated_by
+ * @property-read Category $category
+ * @property-read Unit $unit
+ * @property-read ?Supplier $mainSupplier
+ * @property-read StockStatus $stock_status
+ */
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */

@@ -3,11 +3,11 @@
 | Atribut | Nilai |
 |---|---|
 | Tujuan | Menyediakan panduan diagnosis gejala masalah operasional umum, akar penyebab, langkah solusi, dan pencegahan. |
-| Cakupan | Kendala login, deadlock transaksi, selisih rekonsiliasi, batas ekspor, symlink storage, dan konfigurasi lingkungan. |
+| Cakupan | Kendala login, deadlock transaksi, selisih rekonsiliasi, batas ekspor, symlink storage, dan kesalahan operasional stok. |
 | Audiens | Administrator Sistem, IT Support, Developer |
-| Status | [BELUM DIIMPLEMENTASI] (Kerangka Dokumentasi Tahap 0) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4: Masalah Transaksi, Concurrency, Locking, dan Master Data) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-06 |
+| Terakhir diperbarui | 2026-11-07 |
 | Pemilik | Tech Lead |
 | Terkait | `prd.md` §15, §17; `docs/deployment.md`; `docs/api.md` |
 
@@ -17,11 +17,14 @@
 
 | Gejala Masalah | Kemungkinan Penyebab | Langkah Diagnosis | Solusi & Tindakan | Tindakan Pencegahan |
 |---|---|---|---|---|
-| Login mengembalikan HTTP 429 (*Too Many Requests*) | Melebihi batas 5 kali percobaan gagal dalam 1 menit | Periksa IP dan email di tabel `activity_logs` | Tunggu hingga hitung mundur throttle selesai (maks 60 detik) atau reset cache throttle | Jangan mencoba brute force; gunakan kredensial yang valid |
+| Konfirmasi keluar ditolak `INSUFFICIENT_STOCK` (HTTP 422) | Kuantitas barang yang diminta melebihi sisa fisik `current_stock` saat ini | Periksa sisa stok barang di tabel `products` atau endpoint `/ajax/products/{id}/stock` | Sesuaikan kuantitas keluar sesuai sisa stok fisik, atau lakukan konfirmasi penerimaan barang masuk terlebih dahulu | Perhatikan indikator stok kuning saat mengisi form draft barang keluar |
+| Pembatalan barang masuk ditolak `REVERSAL_INSUFFICIENT_STOCK` (HTTP 422) | Barang masuk yang ingin dibatalkan sudah terlanjur dikeluarkan oleh transaksi lain sehingga sisa stok < kuantitas pembatalan | Bandingkan `current_stock` barang dengan kuantitas yang ada pada baris dokumen masuk | Jangan membatalkan dokumen masuk jika barang sudah keluar. Bila terjadi salah catat, gunakan menu **Penyesuaian Stok Opname** | Pastikan verifikasi barang fisik sebelum mengonfirmasi barang masuk |
+| Penyesuaian stok ditolak `STOCK_CHANGED` (HTTP 409) | Terjadi transaksi barang masuk/keluar lain saat form penyesuaian opname sedang dibuka (D-33) | Periksa apakah ada mutasi baru pada barang tersebut di menu Riwayat Stok | Muat ulang (*refresh*) form penyesuaian untuk membaca stok sistem terkini, periksa selisih baru, lalu simpan ulang | Lakukan opname pada saat jam operasional gudang sedang tenang |
+| Penyesuaian stok ditolak `NO_DIFFERENCE` (HTTP 422) | Angka fisik yang diisi sama persis dengan angka stok sistem | Periksa kolom hasil hitung fisik dan kolom stok sistem | Tidak diperlukan penyesuaian jika stok fisik cocok dengan sistem. Batalkan formulir | Pastikan hanya membuat dokumen penyesuaian jika benar-benar ada selisih opname fisik |
+| Transaksi gagal dengan kode `LOCK_TIMEOUT` (HTTP 503) | Deadlock atau antrean lock baris produk melebihi timeout MySQL setelah 3 kali retry | Periksa query MySQL yang sedang berjalan (`SHOW FULL PROCESSLIST`) | Ulangi operasi konfirmasi transaksi beberapa saat kemudian (data aman dalam transaksi) | Pastikan urutan lock ID produk naik (`ORDER BY id ASC`) dipertahankan pada seluruh operasi batch |
+| Transaksi ditolak `INVALID_STATE_TRANSITION` (HTTP 409) | Dokumen sudah dikonfirmasi/dibatalkan oleh staf lain, atau mencoba mengedit dokumen confirmed | Periksa kolom `status` pada dokumen di basis data | Muat ulang halaman detail transaksi untuk melihat status terkini dokumen | Hindari menekan tombol konfirmasi ganda (*double-click*); sistem memblokir klik ganda di frontend |
+| Nonaktif barang ditolak | Barang masih memiliki sisa stok (`current_stock > 0`) | Periksa kolom `current_stock` pada master barang | Barang hanya dapat dinonaktifkan jika stok bernilai 0 (BR-04). Keluarkan atau sesuaikan sisa stok terlebih dahulu | Habiskan stok terlebih dahulu sebelum mendepresiasi produk |
+| Nonaktif kategori / satuan ditolak | Masih digunakan oleh barang yang berstatus aktif (BR-04) | Periksa jumlah barang aktif yang terhubung ke kategori/satuan tersebut | Pindahkan barang-barang terkait ke kategori/satuan lain, atau nonaktifkan barangnya terlebih dahulu | Audit relasi master barang sebelum menonaktifkan unit/kategori |
+| Foto barang tidak muncul di browser | Tautan simbolik direktori storage belum dibuat | Periksa keberadaan tautan folder `public/storage` | Jalankan perintah `php artisan storage:link` | Pastikan `storage:link` dijalankan saat setup awal |
+| Login mengembalikan HTTP 429 (*Too Many Requests*) | Melebihi batas 5 kali percobaan gagal dalam 1 menit | Periksa IP dan email di tabel `activity_logs` | Tunggu hingga hitung mundur throttle selesai (maks 60 detik) | Gunakan kredensial akun yang valid |
 | Halaman kedaluwarsa HTTP 419 (*Page Expired*) | Token CSRF kedaluwarsa karena form dibiarkan terbuka lama | Periksa masa aktif sesi di `config/session.php` | Muat ulang (*refresh*) halaman browser sebelum menekan tombol submit | Perpanjang session lifetime jika diperlukan |
-| Transaksi gagal dengan kode `LOCK_TIMEOUT` (HTTP 503) | Deadlock atau antrean lock baris produk melebihi timeout | Periksa query MySQL yang sedang berjalan (`SHOW FULL PROCESSLIST`) | Ulangi operasi konfirmasi transaksi beberapa saat kemudian | Pertahankan urutan lock ID produk naik (`ORDER BY id ASC`) |
-| Rekonsiliasi stok menemukan selisih (`stock-integrity`) | Ada manipulasi data langsung pada tabel `products` di luar `StockService` | Jalankan `php artisan stockhub:reconcile` dan periksa log integrity | Lakukan investigasi log mutasi dan posting transaksi penyesuaian | Pastikan hak akses DB produksi tidak mengizinkan modifikasi manual |
-| Ekspor PDF/Excel gagal dengan `EXPORT_LIMIT_EXCEEDED` | Jumlah baris data melebihi batas (PDF > 5.000, Excel > 100.000) | Periksa rentang tanggal dan filter laporan yang aktif | Persempit filter periode laporan atau pilih filter kategori tertentu | Gunakan filter yang lebih spesifik |
-| Foto barang tidak muncul di browser | Tautan simbolik direktori storage belum dibuat | Periksa keberadaan folder `public/storage` | Jalankan perintah `php artisan storage:link` | Tambahkan langkah `storage:link` pada prosedur deployment rilis |
-| Error HTTP 500 dengan ID korelasi | Terjadi *unhandled exception* pada level server | Cari kode ID korelasi pada file log `storage/logs/laravel.log` | Identifikasi stack trace dan laporkan ke tim teknis | Periksa log secara berkala |
-| Waktu transaksi tidak sesuai zona lokal | Konfigurasi timezone belum `Asia/Jakarta` | Periksa nilai `date_default_timezone_get()` via `php artisan tinker` | Pastikan `APP_TIMEZONE=Asia/Jakarta` di file `.env` | Gunakan waktu terstandar pada setiap server |

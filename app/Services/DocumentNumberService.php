@@ -4,7 +4,11 @@ namespace App\Services;
 
 use App\Models\DocumentSequence;
 use App\Models\Product;
+use App\Models\StockAdjustment;
+use App\Models\StockIn;
+use App\Models\StockOut;
 use App\Models\Supplier;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
 class DocumentNumberService
@@ -30,6 +34,48 @@ class DocumentNumberService
             prefix: 'BRG',
             period: null,
             existsCallback: fn (string $code): bool => Product::where('code', $code)->exists()
+        );
+    }
+
+    /**
+     * Generate sequential document number for Stock In: IN-YYYYMM-NNNN (BR-19).
+     */
+    public function generateStockInNumber(?CarbonInterface $date = null): string
+    {
+        $period = ($date ?? now())->format('Ym');
+
+        return $this->generateNextNumber(
+            prefix: 'IN',
+            period: $period,
+            existsCallback: fn (string $code): bool => StockIn::where('number', $code)->exists()
+        );
+    }
+
+    /**
+     * Generate sequential document number for Stock Out: OUT-YYYYMM-NNNN (BR-19).
+     */
+    public function generateStockOutNumber(?CarbonInterface $date = null): string
+    {
+        $period = ($date ?? now())->format('Ym');
+
+        return $this->generateNextNumber(
+            prefix: 'OUT',
+            period: $period,
+            existsCallback: fn (string $code): bool => StockOut::where('number', $code)->exists()
+        );
+    }
+
+    /**
+     * Generate sequential document number for Stock Adjustment: ADJ-YYYYMM-NNNN (BR-19).
+     */
+    public function generateAdjustmentNumber(?CarbonInterface $date = null): string
+    {
+        $period = ($date ?? now())->format('Ym');
+
+        return $this->generateNextNumber(
+            prefix: 'ADJ',
+            period: $period,
+            existsCallback: fn (string $code): bool => StockAdjustment::where('number', $code)->exists()
         );
     }
 

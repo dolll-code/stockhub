@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\StockOutPurpose;
 use App\Enums\TransactionStatus;
+use Carbon\CarbonInterface;
 use Database\Factories\StockOutFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,6 +13,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
+/**
+ * @property int $id
+ * @property string $number
+ * @property CarbonInterface $transaction_date
+ * @property StockOutPurpose $purpose_type
+ * @property string $destination
+ * @property ?string $notes
+ * @property TransactionStatus $status
+ * @property int $created_by
+ * @property ?int $confirmed_by
+ * @property ?int $cancelled_by
+ * @property ?CarbonInterface $confirmed_at
+ * @property ?CarbonInterface $cancelled_at
+ * @property ?string $cancel_reason
+ */
 class StockOut extends Model
 {
     /** @use HasFactory<StockOutFactory> */

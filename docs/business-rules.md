@@ -5,7 +5,7 @@
 | Tujuan | Merinci katalog seluruh aturan bisnis (BR-01 s.d. BR-32), transisi status, rumus stok, dan lokasi penegakan kode. |
 | Cakupan | Seluruh aturan penegakan integritas data persediaan, autentikasi, dan audit untuk satu gudang. |
 | Audiens | Developer, QA Engineer, Product Owner, Stakeholder |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 2 Auth/Pengguna & Tahap 3 Master Data) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4 Lengkap: Auth, Akun, Master Data, dan Transaksi Stok) |
 | Versi aplikasi | 1.0.0 |
 | Terakhir diperbarui | 2026-11-07 |
 | Pemilik | Product Owner & Backend Lead |
@@ -65,11 +65,35 @@
 
 ---
 
-## 5. Status dan Transisi Transaksi `[DIRENCANAKAN]` (Tahap 4)
+## 5. Status dan Transisi Transaksi (STI, STO, ADJ)
 
-- **Draft:** Dokumen tersimpan namun belum memengaruhi saldo stok barang.
-- **Confirmed:** Dokumen sah dan telah diposting; saldo stok bertambah (masuk) atau berkurang (keluar), serta riwayat mutasi permanen dibuat. Dokumen confirmed tidak dapat diedit.
-- **Cancelled:** Dokumen dibatalkan. Jika sebelumnya berstatus confirmed, sistem memposting mutasi pembalik (*reversal*) untuk menetralkan efek stok sebelumnya.
+### 5.1 Siklus Hidup Transaksi Dokumen (BR-07, BR-12, BR-13, BR-14)
+- **Draft:**
+  - Dokumen tersimpan di database (`stock_ins` atau `stock_outs`), tetapi belum memengaruhi saldo persediaan (`current_stock`) dan belum menghasilkan mutasi (`stock_movements`).
+  - Draft dapat diubah detail dan headernya kapan saja oleh pembuatnya (Staff Gudang) atau oleh Super Admin / Admin Gudang.
+  - Draft barang keluar mengizinkan kuantitas melebihi stok yang ada saat itu (menampilkan peringatan draft di antarmuka).
+  - Draft dapat dibatalkan oleh pembuatnya atau SA/AG dengan mencantumkan alasan minimal 10 karakter. Pembatalan draft tidak mengubah stok.
+- **Confirmed:**
+  - Status konfirmasi memposting perubahan stok secara riil dan atomik ke dalam basis data melalui `StockService`.
+  - Pada barang keluar, konfirmasi memeriksa saldo stok setelah row lock. Jika ada item yang tidak mencukupi, seluruh transaksi ditolak dengan `InsufficientStockException` (tidak ada perubahan parsial).
+  - Transaksi confirmed bersifat **final dan terkunci**: tidak dapat diedit atau dihapus secara fisik (BR-12).
+  - Satu-satunya koreksi untuk transaksi confirmed adalah **Pembatalan Transaksi (Reversal)** yang hanya dapat dilakukan oleh peran Super Admin atau Admin Gudang (BR-13).
+- **Cancelled:**
+  - Pembatalan transaksi confirmed memicu mutasi pembalik (`stock_in_cancel` dengan kuantitas negatif untuk barang masuk, atau `stock_out_cancel` dengan kuantitas positif untuk barang keluar).
+  - Untuk pembatalan barang masuk, sistem memeriksa apakah stok saat ini mencukupi untuk dikurangi. Jika stok saat ini telah terpakai oleh pengeluaran lain sehingga kurang dari kuantitas pembatalan, sistem menolak pembatalan dengan `ReversalInsufficientStockException` (HTTP 422).
+  - Dokumen berstatus cancelled bersifat permanen (*terminal state*) dan tidak dapat diaktifkan kembali.
+  - Nomor dokumen yang telah dibatalkan tidak pernah dipakai ulang (BR-19).
+
+### 5.2 Penyesuaian Stok Opname (BR-16)
+- Hanya dapat dilakukan oleh Super Admin dan Admin Gudang (Staff Gudang dan Manajer ditolak HTTP 403).
+- Dokumen penyesuaian tidak memiliki status draft; proses penyimpanan langsung memposting perubahan stok dan berstatus final.
+- Sistem memverifikasi kecocokan stok sistem terkunci dengan nilai yang dilihat pengguna saat membuka form (`expected_system_qty`). Jika terdapat transaksi lain yang mengubah stok di antara pembukaan form dan klik simpan, sistem menolak posting dengan `StockChangedException` (HTTP 409 `STOCK_CHANGED`).
+- Jika stok fisik sama persis dengan stok sistem (selisih = 0), sistem menolak dengan `NoDifferenceException` (HTTP 422 `NO_DIFFERENCE`).
+- Dokumen penyesuaian tidak dapat diubah maupun dibatalkan; koreksi lanjutan harus dilakukan melalui dokumen penyesuaian baru.
+
+### 5.3 Batasan Scope "Own" Staff Gudang (BR-23)
+- Pengguna dengan peran Staff Gudang (SG) hanya dapat melihat, mengubah, mengonfirmasi, atau membatalkan draft transaksi yang dibuat oleh dirinya sendiri (`created_by = auth()->id()`).
+- Upaya mengakses atau memanipulasi ID transaksi milik staf lain menghasilkan respons **HTTP 404** (bukan 403) untuk mencegah *account enumeration* dan celah IDOR.
 
 ---
 
