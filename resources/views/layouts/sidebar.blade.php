@@ -174,23 +174,25 @@
         @endcanany
 
         <!-- Sistem & Pengaturan -->
-        <div class="pt-2">
-            <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Sistem</div>
-            <div class="mt-1 space-y-1">
-                @can('activity-logs.view')
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                        <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                        <span>Log Aktivitas</span>
-                    </a>
-                @endcan
+        @canany(['activity-logs.view', 'settings.manage'])
+            <div class="pt-2">
+                <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Sistem</div>
+                <div class="mt-1 space-y-1">
+                    @can('activity-logs.view')
+                        <a href="{{ route('activity-logs.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('activity-logs.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-amber-500 rounded-full"></span>
+                            <span>Log Aktivitas</span>
+                        </a>
+                    @endcan
 
-                @can('settings.manage')
-                    <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                        <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                        <span>Pengaturan</span>
-                    </a>
-                @endcan
+                    @can('settings.manage')
+                        <a href="{{ route('settings.edit') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('settings.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-blue-500 rounded-full"></span>
+                            <span>Pengaturan</span>
+                        </a>
+                    @endcan
+                </div>
             </div>
-        </div>
+        @endcanany
     </nav>
 </aside>

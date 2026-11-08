@@ -128,3 +128,28 @@ Dihitung secara terpusat melalui enum `App\Enums\StockStatus::fromStock($current
 
 - **Deskripsi:** Layar antarmuka web, dokumen PDF, dan berkas Excel untuk setiap jenis laporan wajib menggunakan **Query Object yang sama persis** (`app/Reports/*ReportQuery.php`).
 - **Implementasi:** Tidak ada logika query terpisah yang ditulis untuk ekspor file; filter, kondisi status, dan sorting dijamin menghasilkan baris data yang identik antara layar dan hasil unduhan.
+
+---
+
+## 10. Kebijakan Batas dan Keamanan Ekspor Berkas (FR-EXP-03, SEC-10)
+
+- **Batas Baris Ekspor:**
+  - PDF: maksimal 5.000 baris.
+  - Excel (.xlsx): maksimal 100.000 baris.
+  - Jika hasil filter melebihi batas, request ditolak dengan `ExportLimitExceededException` (HTTP 422 `EXPORT_LIMIT_EXCEEDED`) dengan instruksi untuk mempersempit filter.
+- **Pencegahan Formula Injection (SEC-10):**
+  - Seluruh teks pada sel Excel yang diawali karakter formula (`=`, `+`, `-`, `@`, tab, atau carriage return) secara otomatis diberi prefiks apostrof `'` via `App\Support\CsvFormulaSanitizer`.
+  - Kolom numerik dan tanggal tetap disimpan dalam tipe asli spreadsheet tanpa konversi teks.
+- **Audit Ekspor:** Setiap ekspor yang sukses wajib dicatat ke dalam audit log aktivitas (`report.exported`) lengkap dengan jenis laporan, format, filter, dan jumlah baris.
+
+---
+
+## 11. Kebijakan Rekonsiliasi Integritas Stok (BR-28, FR-SYS-01)
+
+- **Mekanisme:** Perintah konsol `php artisan stockhub:reconcile` dijalankan terjadwal setiap hari pada pukul **01:00 WIB** (Asia/Jakarta).
+- **Integritas yang Diuji:**
+  1. Perbandingan saldo saat ini `products.current_stock` dengan akumulasi `SUM(qty_change)` pada tabel `stock_movements`.
+  2. Formula mutasi per baris: `qty_after = qty_before + qty_change`.
+  3. Kontinuitas rantai mutasi: `qty_before` baris saat ini wajib cocok dengan `qty_after` baris sebelumnya.
+- **Tanpa Perbaikan Otomatis:** Sistem **dilarang keras memodifikasi atau memperbaiki saldo secara otomatis** (menghindari penutupan anomali tanpa investigasi). Selisih dicatat ke log channel `stock-integrity` dan ActivityLogger (`system.reconcile`). Koreksi hanya boleh dilakukan oleh administrator melalui formulir Penyesuaian Stok Opname setelah investigasi fisik.
+- **Peringatan Dasbor:** Jika rekonsiliasi terakhir mendeteksi selisih integritas, banner peringatan merah akan ditampilkan secara khusus pada dasbor Super Admin (FR-DSH-06).

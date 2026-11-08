@@ -17,6 +17,16 @@ class StockAdjustmentReportQuery
     ) {}
 
     /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function setFilters(array $filters): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
+    /**
      * Build the query for stock adjustments.
      *
      * @return Builder<StockAdjustment>

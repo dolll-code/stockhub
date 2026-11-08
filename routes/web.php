@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ActivityLogController;
 use App\Http\Controllers\AjaxProductController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CategoryController;
@@ -8,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SettingController;
 use App\Http\Controllers\StockAdjustmentController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockInController;
@@ -115,6 +117,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/reports/{type}', [ReportController::class, 'show'])
         ->middleware('can:reports.view')
         ->name('reports.show');
+    Route::get('/reports/{type}/export/{format}', [ReportController::class, 'export'])
+        ->middleware(['can:reports.export', 'throttle:10,1'])
+        ->name('reports.export');
+
+    // Super Admin: Log Aktivitas (PRD §5.13)
+    Route::get('/activity-logs', [ActivityLogController::class, 'index'])
+        ->middleware('can:activity-logs.view')
+        ->name('activity-logs.index');
+
+    // Super Admin: Pengaturan Sistem (PRD §5.14)
+    Route::get('/settings', [SettingController::class, 'edit'])
+        ->middleware('can:settings.manage')
+        ->name('settings.edit');
+    Route::put('/settings', [SettingController::class, 'update'])
+        ->middleware('can:settings.manage')
+        ->name('settings.update');
 
     // Endpoint AJAX JSON (PRD §12.3)
     Route::get('/ajax/products/search', [AjaxProductController::class, 'search'])

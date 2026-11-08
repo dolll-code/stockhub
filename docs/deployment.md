@@ -5,9 +5,9 @@
 | Tujuan | Menjelaskan konfigurasi lingkungan server, build aset, prosedur rilis, migrasi, rollback, dan backup database. |
 | Cakupan | Deployment pada server Linux Ubuntu LTS, Nginx, PHP-FPM, MySQL 8.0/8.4 LTS, dan cron scheduler. |
 | Audiens | DevOps Engineer, System Administrator, Tech Lead |
-| Status | [BELUM DIIMPLEMENTASI] (Kerangka Dokumentasi Tahap 0) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–6: Infrastruktur, Scheduler 01:00 WIB, Logging, dan Setup Storage) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-06 |
+| Terakhir diperbarui | 2026-11-08 |
 | Pemilik | Tech Lead |
 | Terkait | `prd.md` §17; `docs/architecture.md`; `docs/database.md` |
 

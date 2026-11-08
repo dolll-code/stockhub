@@ -131,10 +131,12 @@ class StockInUpdateRequest extends FormRequest
      */
     public function messages(): array
     {
+        $maxDays = (int) Setting::getValue('max_backdate_days', '7');
+
         return [
             'transaction_date.required' => 'Tanggal transaksi wajib diisi.',
             'transaction_date.before_or_equal' => 'Tanggal transaksi tidak boleh melebihi hari ini.',
-            'transaction_date.after_or_equal' => 'Tanggal transaksi melebihi batas tanggal lampau yang diizinkan.',
+            'transaction_date.after_or_equal' => "Tanggal transaksi melebihi batas tanggal lampau yang diizinkan (maksimal {$maxDays} hari yang lalu).",
             'source_type.required' => 'Sumber barang masuk wajib dipilih.',
             'supplier_id.required' => 'Supplier wajib dipilih untuk barang masuk bersumber pembelian (purchase).',
             'supplier_id.exists' => 'Supplier yang dipilih tidak valid atau sudah nonaktif.',

@@ -55,15 +55,32 @@
                     </p>
                 </div>
 
-                <!-- Export Coming Soon Badge (Tahap 6) -->
-                <div class="flex items-center space-x-2">
-                    <span class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200" title="Fitur ekspor dokumen PDF dan XLSX akan diaktifkan pada Tahap 6">
-                        <svg class="w-4 h-4 mr-1.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                        Ekspor PDF / Excel (Tahap 6)
-                    </span>
-                </div>
+                <!-- Export Buttons (FR-EXP-01..04) -->
+                @can('reports.export')
+                    <div class="flex items-center space-x-2">
+                        <a
+                            href="{{ route('reports.export', array_merge(['type' => $type, 'format' => 'pdf'], request()->query())) }}"
+                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 shadow-sm transition"
+                            title="Unduh laporan dalam format dokumen PDF"
+                        >
+                            <svg class="w-4 h-4 mr-1 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            Ekspor PDF
+                        </a>
+
+                        <a
+                            href="{{ route('reports.export', array_merge(['type' => $type, 'format' => 'xlsx'], request()->query())) }}"
+                            class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 shadow-sm transition"
+                            title="Unduh laporan dalam format berkas Excel (.xlsx)"
+                        >
+                            <svg class="w-4 h-4 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Ekspor Excel (.xlsx)
+                        </a>
+                    </div>
+                @endcan
             </div>
 
             <!-- Specific Filter Forms per Report Type -->

@@ -18,6 +18,16 @@ class StockOutReportQuery
     ) {}
 
     /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function setFilters(array $filters): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
+    /**
      * Build the query for confirmed stock out details.
      *
      * @return Builder<StockOutDetail>

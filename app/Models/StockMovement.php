@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\MovementType;
+use Carbon\CarbonInterface;
 use Database\Factories\StockMovementFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,23 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use RuntimeException;
 
+/**
+ * @property int $id
+ * @property int $product_id
+ * @property MovementType $movement_type
+ * @property ?string $reference_type
+ * @property ?int $reference_id
+ * @property ?string $reference_number
+ * @property CarbonInterface $movement_date
+ * @property float|string $qty_before
+ * @property float|string $qty_change
+ * @property float|string $qty_after
+ * @property int $user_id
+ * @property ?string $notes
+ * @property CarbonInterface $created_at
+ * @property-read Product $product
+ * @property-read ?User $user
+ */
 class StockMovement extends Model
 {
     /** @use HasFactory<StockMovementFactory> */

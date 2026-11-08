@@ -17,6 +17,16 @@ class StockMovementReportQuery
     ) {}
 
     /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function setFilters(array $filters): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
+    /**
      * Build the query for stock movements (includes original and reversal per AC-RPT-02).
      *
      * @return Builder<StockMovement>

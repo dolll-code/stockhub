@@ -87,10 +87,12 @@ class StockAdjustmentStoreRequest extends FormRequest
      */
     public function messages(): array
     {
+        $maxDays = (int) Setting::getValue('max_backdate_days', '7');
+
         return [
             'adjustment_date.required' => 'Tanggal penyesuaian wajib diisi.',
             'adjustment_date.before_or_equal' => 'Tanggal penyesuaian tidak boleh melebihi hari ini.',
-            'adjustment_date.after_or_equal' => 'Tanggal penyesuaian melebihi batas tanggal lampau yang diizinkan.',
+            'adjustment_date.after_or_equal' => "Tanggal penyesuaian melebihi batas tanggal lampau yang diizinkan (maksimal {$maxDays} hari yang lalu).",
             'product_id.required' => 'Barang yang akan disesuaikan wajib dipilih.',
             'product_id.exists' => 'Barang yang dipilih tidak valid atau sudah nonaktif.',
             'expected_system_qty.required' => 'Nilai stok sistem wajib disertakan.',

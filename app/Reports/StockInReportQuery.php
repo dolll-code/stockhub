@@ -18,6 +18,16 @@ class StockInReportQuery
     ) {}
 
     /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function setFilters(array $filters): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
+    /**
      * Build the query for confirmed stock in details.
      *
      * @return Builder<StockInDetail>

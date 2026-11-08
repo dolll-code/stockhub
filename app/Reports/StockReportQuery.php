@@ -18,6 +18,16 @@ class StockReportQuery
     ) {}
 
     /**
+     * @param  array<string, mixed>  $filters
+     */
+    public function setFilters(array $filters): self
+    {
+        $this->filters = $filters;
+
+        return $this;
+    }
+
+    /**
      * Build the underlying Eloquent query.
      *
      * @return Builder<Product>

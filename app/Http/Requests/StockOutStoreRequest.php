@@ -101,10 +101,12 @@ class StockOutStoreRequest extends FormRequest
      */
     public function messages(): array
     {
+        $maxDays = (int) Setting::getValue('max_backdate_days', '7');
+
         return [
             'transaction_date.required' => 'Tanggal transaksi wajib diisi.',
             'transaction_date.before_or_equal' => 'Tanggal transaksi tidak boleh melebihi hari ini.',
-            'transaction_date.after_or_equal' => 'Tanggal transaksi melebihi batas tanggal lampau yang diizinkan.',
+            'transaction_date.after_or_equal' => "Tanggal transaksi melebihi batas tanggal lampau yang diizinkan (maksimal {$maxDays} hari yang lalu).",
             'purpose_type.required' => 'Tujuan peruntukan barang keluar wajib dipilih.',
             'destination.required' => 'Tujuan / penerima barang keluar wajib diisi.',
             'destination.min' => 'Tujuan penerima minimal 3 karakter.',

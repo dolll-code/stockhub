@@ -8,6 +8,14 @@ Format mengikuti standar [Keep a Changelog](https://keepachangelog.com/id/1.0.0/
 ## [Unreleased]
 
 ### Added
+- Fitur ekspor berkas PDF (DomPDF) dan Excel (.xlsx via Maatwebsite Excel 3.1) untuk kelima laporan resmi (`ReportController::export`) dengan Single Source of Truth Query Object, penegakan batas ekspor (PDF <= 5.000 baris, Excel <= 100.000 baris -> `EXPORT_LIMIT_EXCEEDED` 422), dan pembatasan throttle 10 request/menit per pengguna (Fase 6, FR-EXP-01..04, BR-31).
+- Perlindungan spreadsheet formula injection (SEC-10, `App\Support\CsvFormulaSanitizer`): penambahan prefiks apostrof `'` pada sel teks berawalan `=`, `+`, `-`, `@`, tab, atau CR, dengan tipe asli tetap dipertahankan untuk data tanggal dan numerik.
+- Pencatatan aktivitas ekspor dokumen pada `ActivityLogger` (`report.exported`) lengkap dengan tipe laporan, format, filter yang diterapkan, dan jumlah baris data (FR-EXP-04, AC-RPT-08).
+- Antarmuka penelusuran audit log sistem khusus Super Admin (`ActivityLogController`, `/activity-logs`) dengan filter pengguna, aksi, rentang tanggal, pencarian deskripsi, dan modal pratinjau nilai sebelum/sesudah (FR-LOG-01..03).
+- Modul Pengaturan Sistem khusus Super Admin (`SettingController`, `/settings`): pengelolaan identitas perusahaan (nama, alamat, telepon), toleransi batas tanggal lampau transaksi (`max_backdate_days` 0–30 hari), dan unggah/hapus logo resmi perusahaan (maks 1 MB) untuk kop dokumen PDF (FR-SET-01..02).
+- Perintah Artisan rekonsiliasi integritas stok persediaan `php artisan stockhub:reconcile` (`App\Console\Commands\ReconcileStockCommand`): membandingkan `products.current_stock` dengan akumulasi `SUM(qty_change)` dan memvalidasi kontinuitas rantai mutasi tanpa memperbaiki otomatis; mencatat temuan ke channel log `stock-integrity` dan ActivityLogger `system.reconcile` (FR-SYS-01, BR-28).
+- Penjadwalan harian otomatis (*cron scheduler*) untuk perintah rekonsiliasi stok pada pukul 01:00 WIB (Asia/Jakarta) pada `routes/console.php`.
+- Suite pengujian fitur Tahap 6: `ExportReportTest.php` (TC-RPT-03, TC-RPT-05, TC-RPT-06, TC-SEC-06, AC-RPT-06), `ActivityLogViewerTest.php` (TC-LOG-01, AC-LOG-03), `SettingManagementTest.php` (TC-SYS-02, FR-SET-01..02), dan `ReconciliationCommandTest.php` (TC-SYS-01, TC-SYS-03, scheduler).
 - Modul Dashboard lengkap per peran (`DashboardController`): 8 kartu metrik untuk SA/AG/MG, grafik interaktif perbandingan transaksi confirmed masuk vs keluar (harian 14 hari, mingguan 12 minggu, bulanan 12 bulan) dengan cache 60 detik, 10 transaksi terbaru, dan 10 barang paling kritis (FR-DSH-01..04, BR-27).
 - Tampilan Dashboard terbatas untuk Staff Gudang (SG): hanya 3 kartu stok (tersedia, minimum, habis), daftar stok kritis, dan 10 transaksi terbaru milik sendiri tanpa grafik global atau data harga (FR-DSH-05, BR-26).
 - Halaman Stok Barang (`/stocks`): pemantauan status stok, kategori, kuantitas saat ini, batas minimum, lokasi rak, pencarian, dan paginasi (FR-STK-01).
