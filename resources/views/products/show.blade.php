@@ -192,6 +192,17 @@
                                     'stock_out_cancel' => 'Batal Keluar',
                                     default => (string) $movement->movement_type,
                                 };
+
+                                $docRoute = null;
+                                if ($movement->reference_type && $movement->reference_id) {
+                                    if (str_contains($movement->reference_type, 'StockIn')) {
+                                        $docRoute = route('stock-ins.show', $movement->reference_id);
+                                    } elseif (str_contains($movement->reference_type, 'StockOut')) {
+                                        $docRoute = route('stock-outs.show', $movement->reference_id);
+                                    } elseif (str_contains($movement->reference_type, 'StockAdjustment')) {
+                                        $docRoute = route('adjustments.show', $movement->reference_id);
+                                    }
+                                }
                             @endphp
                             <tr class="hover:bg-slate-50 transition">
                                 <td class="px-6 py-3.5 text-xs text-slate-600 whitespace-nowrap">
@@ -202,8 +213,14 @@
                                         {{ $typeLabel }}
                                     </span>
                                 </td>
-                                <td class="px-6 py-3.5 font-mono text-xs text-slate-600">
-                                    {{ $movement->reference_number ?? '—' }}
+                                <td class="px-6 py-3.5 font-mono text-xs">
+                                    @if($docRoute)
+                                        <a href="{{ $docRoute }}" class="text-blue-600 hover:underline font-semibold">
+                                            {{ $movement->reference_number ?? 'Dokumen' }}
+                                        </a>
+                                    @else
+                                        <span class="text-slate-400">{{ $movement->reference_number ?? '—' }}</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-3.5 text-right font-mono text-xs text-slate-600">
                                     {{ rtrim(rtrim(number_format((float) $movement->qty_before, 3, ',', '.'), '0'), ',') }}

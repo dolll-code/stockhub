@@ -5,9 +5,9 @@
 | Tujuan | Menjelaskan kontrak antarmuka web HTTP, endpoint AJAX JSON, skema validasi, dan katalog kode error. |
 | Cakupan | Rute sesi web browser dan endpoint AJAX internal; tidak mencakup REST API publik berbasis token (Later). |
 | Audiens | Developer, QA Engineer, Frontend Reviewer |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4: Auth, Akun, Master Data, dan Transaksi Stok) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–5: Auth, Master Data, Transaksi, Dashboard, Persediaan, Laporan) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-07 |
+| Terakhir diperbarui | 2026-11-08 |
 | Pemilik | Backend Lead |
 | Terkait | `prd.md` §12, §15; `docs/authentication.md`; `docs/business-rules.md` |
 
@@ -142,6 +142,21 @@
 
 *Catatan:* Penyesuaian stok tidak memiliki rute edit/update/delete (BR-16).
 
+### 4.8 Pemantauan Stok & Riwayat Mutasi (`stocks.*`, `stock-movements.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/stocks` | `stocks.index` | `stocks.view` | SA, AG, SG, MG | Daftar status stok semua barang: filter `q`, `category_id`, `stock_status`, `status`, sort |
+| `GET` | `/stocks/low` | `stocks.low` | `stocks.view` | SA, AG, SG, MG | Daftar barang kritis aktif (status `habis` dan `minimum`), habis didahulukan |
+| `GET` | `/stock-movements` | `stock-movements.index` | `stock-movements.view` | SA, AG, MG | Buku besar mutasi riwayat stok global (SG ditolak 403) |
+
+### 4.9 Laporan Persediaan & Mutasi (`reports.*`)
+
+| Method | Path | Nama Rute | Otorisasi / Permission | Peran Diizinkan | Deskripsi & Validasi |
+|---|---|---|---|---|---|
+| `GET` | `/reports` | `reports.index` | `reports.view` | SA, AG, MG | Pengalihan rute ke `/reports/stock` |
+| `GET` | `/reports/{type}` | `reports.show` | `reports.view` | SA, AG, MG | Layar laporan interaktif 5 jenis: `stock`, `stock-ins`, `stock-outs`, `adjustments`, `movements` (SG ditolak 403) |
+
 ---
 
 ## 5. Rangkuman Endpoint AJAX JSON (PRD §12.3)
@@ -150,7 +165,7 @@
 |---|---|---|---|:---:|
 | `GET` | `/ajax/products/search?q=&limit=20` | Pencarian barang aktif untuk dropdown transaksi | `products.view` | [SUDAH DIIMPLEMENTASI] |
 | `GET` | `/ajax/products/{id}/stock` | Pengambilan data stok terkini, satuan, dan status stok | `products.view` | [SUDAH DIIMPLEMENTASI] |
-| `GET` | `/ajax/dashboard/chart?period=` | Data analitik grafik dasbor transaksi masuk vs keluar | `dashboard.view` | `[DIRENCANAKAN]` (Tahap 5) |
+| `GET` | `/ajax/dashboard/chart?period=daily\|weekly\|monthly` | Data analitik grafik dasbor transaksi masuk vs keluar | `dashboard.view` (SG: 403) | [SUDAH DIIMPLEMENTASI] |
 
 ---
 

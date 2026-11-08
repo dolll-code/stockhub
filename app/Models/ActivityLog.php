@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\CarbonInterface;
 use Database\Factories\ActivityLogFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -9,6 +10,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use RuntimeException;
 
+/**
+ * @property int $id
+ * @property ?int $user_id
+ * @property string $action
+ * @property string $description
+ * @property ?string $subject_type
+ * @property ?int $subject_id
+ * @property ?array<string, mixed> $old_values
+ * @property ?array<string, mixed> $new_values
+ * @property ?string $ip_address
+ * @property ?string $user_agent
+ * @property CarbonInterface $created_at
+ */
 class ActivityLog extends Model
 {
     /** @use HasFactory<ActivityLogFactory> */

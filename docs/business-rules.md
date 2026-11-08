@@ -5,9 +5,9 @@
 | Tujuan | Merinci katalog seluruh aturan bisnis (BR-01 s.d. BR-32), transisi status, rumus stok, dan lokasi penegakan kode. |
 | Cakupan | Seluruh aturan penegakan integritas data persediaan, autentikasi, dan audit untuk satu gudang. |
 | Audiens | Developer, QA Engineer, Product Owner, Stakeholder |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4 Lengkap: Auth, Akun, Master Data, dan Transaksi Stok) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–5: Auth, Master Data, Transaksi, Dashboard, Persediaan, Laporan) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-07 |
+| Terakhir diperbarui | 2026-11-08 |
 | Pemilik | Product Owner & Backend Lead |
 | Terkait | `prd.md` §6, §7; `docs/architecture.md`; `docs/database.md`; `docs/authentication.md` |
 
@@ -102,4 +102,29 @@
 - `habis`: Kondisi ketika `current_stock = 0`.
 - `minimum`: Kondisi ketika `0 < current_stock <= min_stock`.
 - `aman`: Kondisi ketika `current_stock > min_stock`.
-Dihitung secara dinamis melalui enum `App\Enums\StockStatus::fromStock($current, $min)`.
+Dihitung secara terpusat melalui enum `App\Enums\StockStatus::fromStock($current, $min)`. Berlaku seragam di Dashboard, Halaman Stok Barang, Halaman Stok Minimum, Notifikasi Lonceng Navbar, dan Laporan.
+
+---
+
+## 7. Larangan Agregasi Kuantitas Lintas Satuan (BR-27)
+
+- **Deskripsi:** Sistem secara tegas **dilarang menjumlahkan total kuantitas fisik lintas satuan yang berbeda** (misalnya menjumlahkan pcs dengan kg atau liter), karena menghasilkan angka yang tidak bermakna bisnis.
+- **Implementasi:**
+  - Kartu dasbor "Total stok tersedia" diganti dengan kartu hitungan jumlah jenis barang yang memiliki stok > 0 (`availableStockProductsCount`).
+  - Grafik dasbor membandingkan **jumlah transaksi confirmed**, bukan volume kuantitas.
+  - Tabel dan layar laporan tidak menampilkan baris footer grand total kuantitas lintas barang. Subtotal kuantitas hanya diizinkan per jenis barang spesifik.
+
+---
+
+## 8. Integritas Data Laporan (BR-21)
+
+- **Transaksi Masuk & Keluar:** Seluruh laporan transaksi hanya menyertakan data yang berstatus `confirmed`. Transaksi berstatus `draft` dan `cancelled` tidak dimasukkan dalam laporan atau statistik dasbor.
+- **Laporan Pergerakan Stok:** Memuat seluruh mutasi riwayat stok, baik mutasi asli (`stock_in`, `stock_out`, `adjustment`, `opening_balance`) maupun mutasi pembalik pembatalan (`stock_in_cancel`, `stock_out_cancel`).
+- **Laporan Persediaan As-Of:** Perhitungan stok pada tanggal lampau dihitung dari akumulasi `SUM(qty_change)` pada tabel `stock_movements` yang memiliki `movement_date <= as_of_date`. Status stok dievaluasi terhadap `min_stock` barang saat ini.
+
+---
+
+## 9. Prinsip Single Source of Truth Laporan & Ekspor (BR-31)
+
+- **Deskripsi:** Layar antarmuka web, dokumen PDF, dan berkas Excel untuk setiap jenis laporan wajib menggunakan **Query Object yang sama persis** (`app/Reports/*ReportQuery.php`).
+- **Implementasi:** Tidak ada logika query terpisah yang ditulis untuk ekspor file; filter, kondisi status, dan sorting dijamin menghasilkan baris data yang identik antara layar dan hasil unduhan.

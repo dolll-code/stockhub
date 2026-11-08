@@ -125,6 +125,19 @@ tests/
 | `TC-CON-03` | Stok sistem berubah saat form opname dibuka: ditolak STOCK_CHANGED 409 (AC-ADJ-03, D-33) | Concurrency | `Transaction/ConcurrencyTest.php` | PASS |
 | `CON-STRESS` | Uji stres konkurensi 50 iterasi transaksi locked berurutan di MySQL: 100% konsisten (PRD §16.2) | Concurrency | `Transaction/ConcurrencyTest.php` | PASS |
 | `ARCH-STOCK` | Uji arsitektur: hanya StockService yang menulis current_stock di seluruh codebase (BR-06) | Arch | `Architecture/StockArchitectureTest.php` | PASS |
+| `TC-DSH-01` | Dasbor bulanan hanya menghitung transaksi confirmed bulan ini (AC-DSH-01, FR-DSH-01) | Feature | `Dashboard/DashboardTest.php` | PASS |
+| `TC-DSH-02` | Dasbor status stok: habis=1, minimum=1, tersedia=2 (AC-DSH-02, FR-DSH-01) | Feature | `Dashboard/DashboardTest.php` | PASS |
+| `TC-DSH-03` | Dasbor SG dibatasi hanya transaksi sendiri, tanpa grafik global (AC-DSH-03, FR-DSH-05) | Feature | `Dashboard/DashboardTest.php` | PASS |
+| `TC-DSH-04` | Dasbor tidak menjumlahkan kuantitas fisik lintas satuan berbeda (AC-DSH-04, BR-27) | Feature | `Dashboard/DashboardTest.php` | PASS |
+| `TC-STK-01` | Batas status stok min=5 (0->habis, 3->min, 5->min, 6->aman) (AC-STK-01, BR-18) | Feature | `Stock/StockMonitoringTest.php` | PASS |
+| `TC-STK-02` | Batas status stok min=0 (0->habis, >0->aman) (AC-STK-02, BR-18) | Feature | `Stock/StockMonitoringTest.php` | PASS |
+| `TC-STK-04` | Lonceng notifikasi navbar live menampilkan jumlah aktif habis+minimum (AC-STK-04, FR-NTF-01) | Feature | `Stock/StockMonitoringTest.php` | PASS |
+| `TC-STK-05` | Perubahan min_stock langsung mengubah status stok tanpa movement (AC-STK-06, BR-29) | Feature | `Stock/StockMonitoringTest.php` | PASS |
+| `TC-RPT-01` | Laporan Barang Masuk hanya memuat transaksi confirmed (AC-RPT-01, BR-21) | Feature | `Report/ReportTest.php` | PASS |
+| `TC-RPT-02` | Laporan Pergerakan Stok memuat movement asli dan pembalik (AC-RPT-02, FR-RPT-05) | Feature | `Report/ReportTest.php` | PASS |
+| `TC-RPT-03` | Query Object menghasilkan data konsisten antara paginate() dan get() (AC-RPT-03, BR-31) | Feature | `Report/ReportTest.php` | PASS |
+| `TC-RPT-04` | Laporan persediaan as_of_date menghitung saldo dari movement lampau (AC-RPT-04, FR-RPT-01) | Feature | `Report/ReportTest.php` | PASS |
+| `PERF-NPLUS1`| Audit N+1: preventLazyLoading tidak memicu exception pada dasbor, stok, mutasi, laporan | Feature | `Performance/PerformanceAndNPlusOneTest.php` | PASS |
 
 ---
 

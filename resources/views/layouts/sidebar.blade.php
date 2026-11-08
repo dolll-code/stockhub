@@ -85,44 +85,71 @@
         @endcanany
 
         <!-- Persediaan -->
-        <div class="pt-2">
-            <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Persediaan</div>
-            <div class="mt-1 space-y-1">
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Stok Barang</span>
-                </a>
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Stok Minimum</span>
-                </a>
-                @canany(['adjustments.view', 'adjustments.create'])
-                    <a href="{{ route('adjustments.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('adjustments.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
-                        <span class="w-2 h-2 mr-3 bg-amber-500 rounded-full"></span>
+        @canany(['stocks.view', 'adjustments.view', 'adjustments.create', 'stock-movements.view'])
+            <div class="pt-2">
+                <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Persediaan</div>
+                <div class="mt-1 space-y-1">
+                    @can('stocks.view')
+                        <a href="{{ route('stocks.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stocks.index') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-emerald-500 rounded-full"></span>
+                            <span>Stok Barang</span>
+                        </a>
+
+                        <a href="{{ route('stocks.low') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stocks.low') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-amber-500 rounded-full"></span>
+                            <span>Stok Minimum</span>
+                        </a>
+                    @endcan
+
+                    @canany(['adjustments.view', 'adjustments.create'])
+                        <a href="{{ route('adjustments.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('adjustments.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-purple-500 rounded-full"></span>
+                            <span>Penyesuaian</span>
+                        </a>
+                    @endcanany
+
+                    @can('stock-movements.view')
+                        <a href="{{ route('stock-movements.index') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('stock-movements.*') ? 'bg-slate-800 text-white font-medium' : '' }}">
+                            <span class="w-2 h-2 mr-3 bg-blue-500 rounded-full"></span>
+                            <span>Riwayat Stok</span>
+                        </a>
+                    @endcan
+                </div>
+            </div>
+        @endcanany
+
+        <!-- Laporan (SA, AG, MG) -->
+        @can('reports.view')
+            <div class="pt-2">
+                <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
+                <div class="mt-1 space-y-1">
+                    <a href="{{ route('reports.show', 'stock') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('reports.show') && request()->route('type') === 'stock' ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-teal-500 rounded-full"></span>
+                        <span>Persediaan</span>
+                    </a>
+
+                    <a href="{{ route('reports.show', 'stock-ins') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('reports.show') && request()->route('type') === 'stock-ins' ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-cyan-500 rounded-full"></span>
+                        <span>Barang Masuk</span>
+                    </a>
+
+                    <a href="{{ route('reports.show', 'stock-outs') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('reports.show') && request()->route('type') === 'stock-outs' ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-rose-500 rounded-full"></span>
+                        <span>Barang Keluar</span>
+                    </a>
+
+                    <a href="{{ route('reports.show', 'adjustments') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('reports.show') && request()->route('type') === 'adjustments' ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-purple-500 rounded-full"></span>
                         <span>Penyesuaian</span>
                     </a>
-                @endcanany
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Riwayat Stok</span>
-                </a>
-            </div>
-        </div>
 
-        <!-- Laporan -->
-        <div class="pt-2">
-            <div class="px-3 text-xs font-semibold uppercase tracking-wider text-slate-400">Laporan</div>
-            <div class="mt-1 space-y-1">
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Laporan Persediaan</span>
-                </a>
-                <a href="#" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition opacity-75 cursor-not-allowed" title="[BELUM DIIMPLEMENTASI]">
-                    <span class="w-2 h-2 mr-3 bg-slate-500 rounded-full"></span>
-                    <span>Laporan Mutasi</span>
-                </a>
+                    <a href="{{ route('reports.show', 'movements') }}" class="flex items-center px-3 py-2 rounded-lg text-slate-300 hover:bg-slate-800 hover:text-white transition {{ request()->routeIs('reports.show') && request()->route('type') === 'movements' ? 'bg-slate-800 text-white font-medium' : '' }}">
+                        <span class="w-2 h-2 mr-3 bg-indigo-500 rounded-full"></span>
+                        <span>Pergerakan Stok</span>
+                    </a>
+                </div>
             </div>
-        </div>
+        @endcan
 
         <!-- Pengguna & Peran (Khusus SA) -->
         @canany(['users.manage', 'roles.view'])

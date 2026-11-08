@@ -5,9 +5,9 @@
 | Tujuan | Memberikan instruksi operasional penggunaan aplikasi StockHub per peran pengguna dan per modul. |
 | Cakupan | Panduan antarmuka web untuk peran Super Admin, Admin Gudang, Staff Gudang, dan Manajer. |
 | Audiens | Pengguna Akhir, Administrator Sistem, QA Tester |
-| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–4: Auth, Akun, Master Data, dan Transaksi Stok) |
+| Status | [SUDAH DIIMPLEMENTASI] (Tahap 1–5: Auth, Master Data, Transaksi, Dashboard, Persediaan, Laporan) |
 | Versi aplikasi | 1.0.0 |
-| Terakhir diperbarui | 2026-11-07 |
+| Terakhir diperbarui | 2026-11-08 |
 | Pemilik | QA Lead & Product Owner |
 | Terkait | `prd.md` §5, §8, §13; `docs/authentication.md` |
 
@@ -253,5 +253,56 @@ Digunakan saat hasil stok opname fisik di gudang berbeda dengan catatan sistem (
 5. Isi **Keterangan Detail Investigasi** minimal 10 karakter.
 6. Klik **Posting Penyesuaian**, lalu konfirmasi pada dialog sembul.
 7. Dokumen langsung berstatus **Final** (nomor `ADJ-YYYYMM-NNNN`) dan stok sistem langsung diperbarui sesuai angka fisik melalui `StockService`. Dokumen penyesuaian tidak dapat diedit maupun dibatalkan.
+
+---
+
+## 13. Dashboard dan Analitik Ringkasan (`/dashboard`)
+
+### 13.1 Tampilan Manajemen (Super Admin, Admin Gudang, Manajer)
+- **8 Kartu Indikator:** Total barang aktif, kategori aktif, supplier aktif, barang dengan stok tersedia (>0), transaksi masuk confirmed bulan ini, transaksi keluar confirmed bulan ini, stok minimum, dan stok habis.
+- **Grafik Interaktif Transaksi Confirmed (Chart.js):** Membandingkan frekuensi transaksi masuk vs keluar terkonfirmasi dengan pilihan periode:
+  - Harian (14 hari terakhir)
+  - Mingguan (12 minggu terakhir)
+  - Bulanan (12 bulan terakhir)
+- **10 Barang Paling Kritis:** Menampilkan barang yang telah habis dan barang dengan sisa persediaan paling mendekati batas kritis, dilengkapi tautan langsung ke halaman Stok Minimum.
+- **10 Transaksi Terbaru:** Tabel gabungan transaksi masuk dan keluar terkini lengkap dengan status dan tautan detail dokumen.
+
+### 13.2 Tampilan Khusus Staff Gudang (FR-DSH-05)
+Dibatasi demi keamanan dan fokus operasional:
+- 3 kartu stok utama: barang tersedia (>0), stok minimum, dan stok habis.
+- Daftar 10 barang paling kritis untuk memprioritaskan penataan gudang.
+- 10 transaksi terbaru **hanya yang dibuat oleh staf tersebut**.
+- Tidak menampilkan grafik transaksi global, jumlah supplier, maupun informasi harga perolehan.
+
+---
+
+## 14. Pemantauan Stok & Riwayat Mutasi (`/stocks`, `/stocks/low`, `/stock-movements`)
+
+### 14.1 Halaman Stok Barang (`/stocks`)
+- Menampilkan seluruh status persediaan barang persediaan, jumlah stok fisik saat ini, stok minimum acuan, status aman/minimum/habis, dan lokasi rak gudang.
+- Mendukung pencarian, filter kategori, filter status stok, dan pengurutan stok terendah/terbanyak.
+
+### 14.2 Halaman Stok Minimum (`/stocks/low`) & Notifikasi Lonceng
+- **Ikon Lonceng Navbar (FR-NTF-01):** Menampilkan lencana angka berwarna merah menyala yang menghitung secara live jumlah jenis barang aktif yang berstatus **Habis** dan **Minimum**. Mengklik ikon lonceng langsung mengarahkan Anda ke halaman Stok Minimum.
+- **Halaman Stok Minimum:** Hanya menampilkan barang aktif berkategori kritis, dengan barang habis di posisi paling atas dan diurutkan berdasarkan rasio persediaan paling rendah.
+
+### 14.3 Riwayat Mutasi Stok Global (`/stock-movements`)
+- Hak akses: Super Admin, Admin Gudang, Manajer (Staff Gudang ditolak HTTP 403).
+- Menampilkan buku besar mutasi riwayat stok permanen (*append-only*): waktu dan tanggal bisnis, barang, tipe mutasi, nomor dokumen referensi beserta tautan langsung, saldo sebelum, kuantitas perubahan (+/−), saldo sesudah, petugas pencatat, dan keterangan.
+
+---
+
+## 15. Laporan Persediaan & Mutasi (`/reports/{type}`)
+
+Hak akses: Super Admin, Admin Gudang, Manajer (Staff Gudang ditolak HTTP 403).
+
+Tersedia lima laporan resmi dengan filter terpusat:
+1. **Laporan Persediaan (`/reports/stock`):** Menampilkan kondisi stok pada satu titik waktu. Fitur **As-of Date** memungkinkan Anda melihat kondisi saldo stok di masa lalu (misal: akhir bulan lalu) yang dihitung dari akumulasi mutasi historis.
+2. **Laporan Barang Masuk (`/reports/stock-ins`):** Rekapitulasi seluruh transaksi barang masuk yang telah berstatus `confirmed` (draft dan cancelled otomatis disaring keluar).
+3. **Laporan Barang Keluar (`/reports/stock-outs`):** Rekapitulasi seluruh pengeluaran barang confirmed beserta tujuan distribusi.
+4. **Laporan Penyesuaian Stok (`/reports/adjustments`):** Rekapitulasi hasil selisih opname fisik dan alasan investigasinya.
+5. **Laporan Pergerakan Stok (`/reports/movements`):** Buku besar pergerakan barang dalam rentang waktu tertentu, mencakup mutasi asli dan mutasi pembalik pembatalan.
+
+*Catatan Ekspor:* Tombol ekspor berkas PDF dan Excel (.xlsx) akan diaktifkan secara menyeluruh pada Tahap 6. Layar saat ini menggunakan Query Object terpusat yang sama dengan calon modul ekspor (BR-31).
 
 

@@ -3,11 +3,15 @@
 use App\Http\Controllers\AjaxProductController;
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\StockAdjustmentController;
+use App\Http\Controllers\StockController;
 use App\Http\Controllers\StockInController;
+use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\StockOutController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\UnitController;
@@ -18,9 +22,9 @@ Route::get('/', function () {
     return redirect()->route('dashboard');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'can:dashboard.view'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'can:dashboard.view'])
+    ->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -91,6 +95,27 @@ Route::middleware('auth')->group(function () {
     Route::resource('adjustments', StockAdjustmentController::class)
         ->except(['edit', 'update', 'destroy']);
 
+    // Persediaan: Stok Barang & Stok Minimum (PRD §5.11)
+    Route::get('/stocks', [StockController::class, 'index'])
+        ->middleware('can:stocks.view')
+        ->name('stocks.index');
+    Route::get('/stocks/low', [StockController::class, 'low'])
+        ->middleware('can:stocks.view')
+        ->name('stocks.low');
+
+    // Persediaan: Riwayat Stok Global (PRD §5.11)
+    Route::get('/stock-movements', [StockMovementController::class, 'index'])
+        ->middleware('can:stock-movements.view')
+        ->name('stock-movements.index');
+
+    // Laporan: 5 Laporan Resmi (PRD §5.12)
+    Route::get('/reports', [ReportController::class, 'index'])
+        ->middleware('can:reports.view')
+        ->name('reports.index');
+    Route::get('/reports/{type}', [ReportController::class, 'show'])
+        ->middleware('can:reports.view')
+        ->name('reports.show');
+
     // Endpoint AJAX JSON (PRD §12.3)
     Route::get('/ajax/products/search', [AjaxProductController::class, 'search'])
         ->middleware('can:products.view')
@@ -98,6 +123,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/ajax/products/{product}/stock', [AjaxProductController::class, 'stock'])
         ->middleware('can:products.view')
         ->name('ajax.products.stock');
+    Route::get('/ajax/dashboard/chart', [DashboardController::class, 'chart'])
+        ->middleware('can:dashboard.view')
+        ->name('ajax.dashboard.chart');
 });
 
 require __DIR__.'/auth.php';

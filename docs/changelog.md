@@ -8,6 +8,15 @@ Format mengikuti standar [Keep a Changelog](https://keepachangelog.com/id/1.0.0/
 ## [Unreleased]
 
 ### Added
+- Modul Dashboard lengkap per peran (`DashboardController`): 8 kartu metrik untuk SA/AG/MG, grafik interaktif perbandingan transaksi confirmed masuk vs keluar (harian 14 hari, mingguan 12 minggu, bulanan 12 bulan) dengan cache 60 detik, 10 transaksi terbaru, dan 10 barang paling kritis (FR-DSH-01..04, BR-27).
+- Tampilan Dashboard terbatas untuk Staff Gudang (SG): hanya 3 kartu stok (tersedia, minimum, habis), daftar stok kritis, dan 10 transaksi terbaru milik sendiri tanpa grafik global atau data harga (FR-DSH-05, BR-26).
+- Halaman Stok Barang (`/stocks`): pemantauan status stok, kategori, kuantitas saat ini, batas minimum, lokasi rak, pencarian, dan paginasi (FR-STK-01).
+- Halaman Stok Minimum (`/stocks/low`): penyaringan khusus barang aktif berkategori kritis (`habis` dan `minimum`) dengan pengurutan berdasarkan tingkat krisis ketersediaan (FR-STK-02).
+- Notifikasi live lonceng navbar: indikator badge real-time yang menghitung jumlah jenis barang aktif berstatus habis + minimum dengan tautan langsung ke `/stocks/low` tanpa tabel notifikasi (FR-NTF-01, AC-STK-04).
+- Halaman Riwayat Stok Global (`/stock-movements`): buku besar mutasi stok read-only untuk SA, AG, MG dengan filter barang, jenis mutasi, rentang tanggal, dan pengguna (FR-STK-03).
+- Lima Query Objects Laporan terpusat (`App\Reports\*ReportQuery`): Persediaan (dengan dukungan `as_of_date` historis), Barang Masuk (hanya confirmed), Barang Keluar (hanya confirmed), Penyesuaian Stok, dan Pergerakan Stok (asli + pembalik) sesuai BR-21, BR-27, dan BR-31.
+- Halaman Laporan Interaktif (`ReportController`, `/reports/{type}`): navigasi tab 5 laporan resmi, filter lengkap per kriteria bisnis, dan proteksi dari Staff Gudang (HTTP 403).
+- Suite pengujian fitur Tahap 5: `DashboardTest.php` (TC-DSH-01..04), `StockMonitoringTest.php` (TC-STK-01..05), `ReportTest.php` (TC-RPT-01..04), serta `PerformanceAndNPlusOneTest.php` untuk verifikasi efisiensi query dan audit `preventLazyLoading`.
 - Layanan inti transaksi dan mutasi stok `StockService` (`App\Services\StockService`) sebagai gerbang tunggal penulisan `products.current_stock` menggunakan kalkulasi presisi BCMath, *pessimistic row locking* berurutan ID naik, dan penanganan *deadlock retry* 3x (Fase 4, BR-06, BR-08, BR-09).
 - Modul Transaksi Barang Masuk (`StockInService`, `StockInController`): alur draft (1–100 item), konfirmasi penambahan stok atomik, pembatalan draft, dan pembatalan confirmed dengan mutasi pembalik `stock_in_cancel` (FR-STI-01..07, BR-13, BR-22).
 - Modul Transaksi Barang Keluar (`StockOutService`, `StockOutController`): alur draft (1–100 item), pencegahan *overselling* saat konfirmasi dengan penolakan menyeluruh (`INSUFFICIENT_STOCK`), pembatalan draft, dan pemulihan stok confirmed via `stock_out_cancel` (FR-STO-01..07, BR-10).
